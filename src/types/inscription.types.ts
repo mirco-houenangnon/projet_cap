@@ -178,18 +178,17 @@ export interface StudentListItem {
   annee?: string;
   entryDiploma?: string;
   statut?: string;
-  telephone?: string;
+  telephone?: string | null;
   groupe?: string;
 }
 
 // Student details (returned by student details API)
 export interface StudentDetails extends StudentListItem {
   // Inherits all fields from StudentListItem
-  // Override optional fields to clarify they may be null
+  // Override optional fields to make them required or add additional details
   annee: string;
   entryDiploma?: string;
   statut: string;
-  telephone?: string | null;
   lieuNaissance?: string;
   photo?: string | null;
   student_pending_student_id?: number;
