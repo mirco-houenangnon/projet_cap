@@ -327,6 +327,7 @@ describe('InscriptionService', () => {
     })
 
     it('devrait retourner des tableaux vides en cas d\'erreur', async () => {
+      const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {})
       vi.mocked(HttpService.get).mockRejectedValue(new Error('Network error'))
 
       const result = await InscriptionService.filterOptions()
@@ -336,6 +337,9 @@ describe('InscriptionService', () => {
       expect(result.entryDiplomas).toEqual([])
       expect(result.statuts).toEqual([])
       expect(result.niveaux).toEqual({})
+      expect(consoleErrorSpy).toHaveBeenCalledWith('Erreur lors de la récupération des options de filtrage:', expect.any(Error))
+      
+      consoleErrorSpy.mockRestore()
     })
   })
 
