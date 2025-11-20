@@ -146,12 +146,13 @@ class InscriptionService {
   } = {}): Promise<{ data: PendingStudentData[]; meta: any }> => {
     const params = new URLSearchParams()
     Object.entries(filters).forEach(([key, value]) => {
-      if (value !== undefined && value !== null && value !== '') {
+      if (value !== undefined && value !== null && value !== '' && value !== 'all') {
         params.append(key, value.toString())
       }
     })
     
-    const url = `${INSCRIPTION_ROUTES.PENDING_STUDENTS}?${params.toString()}`
+    const queryString = params.toString()
+    const url = queryString ? `${INSCRIPTION_ROUTES.PENDING_STUDENTS}?${queryString}` : INSCRIPTION_ROUTES.PENDING_STUDENTS
     return await HttpService.get<{data: PendingStudentData[]; meta: any}>(url)
   }
 
@@ -211,7 +212,7 @@ class InscriptionService {
    * Exporte les données
    */
   exportData = async (endpoint: string) => {
-    return await HttpService.get(endpoint)
+    return await HttpService.downloadFile(endpoint)
   }
 
   /**
@@ -286,9 +287,10 @@ class InscriptionService {
       params.append('groupe', groupe)
     }
     
-    return await HttpService.downloadFile(
+    const result = await HttpService.downloadFile(
       `${INSCRIPTION_ROUTES.BASE}/students/export/${type}?${params.toString()}`
     )
+    return result.url
   }
 
   /**
@@ -355,6 +357,14 @@ class InscriptionService {
   }
 
   /**
+   * Récupère tous les niveaux d'études (format plat)
+   */
+  getAllNiveaux = async () => {
+    const response = await HttpService.get<{data: Array<{value: string; label: string}>}>(INSCRIPTION_ROUTES.NIVEAUX_ALL)
+    return response.data
+  }
+
+  /**
    * Récupère toutes les options de filtrage (filières, années, diplômes d'entrée, statuts, niveaux)
    */
   filterOptions = async () => {
@@ -363,7 +373,7 @@ class InscriptionService {
         this.getFilieres(),
         this.academicYears(),
         this.getEntryDiplomas(),
-        this.getNiveaux()
+        this.getAllNiveaux()
       ])
       
       // Statuts disponibles pour les étudiants en attente
@@ -378,7 +388,7 @@ class InscriptionService {
         years: years || [],
         entryDiplomas: entryDiplomas?.data || [],
         statuts,
-        niveaux: niveaux || {}
+        niveaux: niveaux || []
       }
     } catch (error) {
       console.error('Erreur lors de la récupération des options de filtrage:', error)
@@ -387,7 +397,7 @@ class InscriptionService {
         years: [],
         entryDiplomas: [],
         statuts: [],
-        niveaux: {}
+        niveaux: []
       }
     }
   }

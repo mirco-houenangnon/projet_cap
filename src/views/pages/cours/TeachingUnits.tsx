@@ -46,7 +46,6 @@ const TeachingUnits: React.FC = () => {
     teachingUnits,
     loading,
     error,
-    filters,
     createTeachingUnit,
     updateTeachingUnit,
     deleteTeachingUnit,
@@ -54,8 +53,6 @@ const TeachingUnits: React.FC = () => {
     resetFilters,
     setError
   } = useTeachingUnits()
-
-  // États locaux pour l'interface utilisateur
   const [showModal, setShowModal] = useState(false)
   const [editingUnit, setEditingUnit] = useState<TeachingUnit | null>(null)
   const [formData, setFormData] = useState({
@@ -229,7 +226,7 @@ const TeachingUnits: React.FC = () => {
                         </CTableDataCell>
                         <CTableDataCell>{unit.name}</CTableDataCell>
                         <CTableDataCell>
-                          <CBadge color="info">{unit.course_elements_count || 0}</CBadge>
+                          <CBadge color="info">{unit.course_elements?.length || 0}</CBadge>
                         </CTableDataCell>
                         <CTableDataCell>
                           {new Date(unit.created_at).toLocaleDateString('fr-FR')}

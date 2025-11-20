@@ -149,8 +149,24 @@ class FinanceService {
       }
     })
     
-    const url = `${FINANCE_ROUTES.STATISTICS}?${params.toString()}`
+    const url = `/finance/dashboard/stats?${params.toString()}`
     return await HttpService.get(url)
+  }
+
+  // ==================== MÉTHODES GÉNÉRIQUES ====================
+  
+  /**
+   * Méthode GET générique
+   */
+  get = async (endpoint: string, config?: any) => {
+    return await HttpService.get(endpoint, config)
+  }
+
+  /**
+   * Méthode POST générique
+   */
+  post = async (endpoint: string, data?: any, config?: any) => {
+    return await HttpService.post(endpoint, data, config)
   }
 }
 

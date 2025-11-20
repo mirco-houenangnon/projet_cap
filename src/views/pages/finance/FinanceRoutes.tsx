@@ -2,13 +2,16 @@ import { Suspense } from 'react'
 import { Routes, Route, Navigate } from 'react-router-dom'
 import { LoadingSpinner } from '@/components'
 
-// const Dashboard = React.lazy(() => import('./Dashboard'))
+import { Dashboard, Tarifs, Historique, Validation } from './index'
 
 const FinanceRoutes = () => {
   return (
     <Suspense fallback={<LoadingSpinner fullPage message="Chargement du module Finance..." />}>
       <Routes>
-        {/* <Route path="/dashboard" element={<Dashboard />} /> */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/tarifs" element={<Tarifs />} />
+        <Route path="/historique" element={<Historique />} />
+        <Route path="/validation" element={<Validation />} />
         <Route path="/" element={<Navigate to="/finance/dashboard" replace />} />
         {/* Route 404 pour les sous-routes invalides */}
         <Route path="*" element={<Navigate to="/404" replace />} />

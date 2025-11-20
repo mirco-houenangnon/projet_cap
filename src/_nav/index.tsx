@@ -23,7 +23,7 @@ import financeNavigation from "./finance.tsx";
 import bibliothequeNavigation from "./bibliotheque.tsx";
 import attestationNavigation from "./attestation.tsx";
 import presenceNavigation from "./presence.tsx";
-import noteNavigation from "./note.tsx";
+import getNoteNavigation from "./note.tsx";
 import cahierNavigation from "./cahier.tsx"
 
 const mainNavigation = [
@@ -499,4 +499,4 @@ const mainNavigation = [
   },
 ]
 
-export { mainNavigation, inscriptionNavigation, emploiNavigation, attestationNavigation, bibliothequeNavigation, financeNavigation, coursNavigation, cahierNavigation, soutenanceNavigation, rhNavigation, presenceNavigation, noteNavigation }
+export { mainNavigation, inscriptionNavigation, emploiNavigation, attestationNavigation, bibliothequeNavigation, financeNavigation, coursNavigation, cahierNavigation, soutenanceNavigation, rhNavigation, presenceNavigation, getNoteNavigation }

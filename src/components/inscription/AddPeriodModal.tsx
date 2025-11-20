@@ -86,17 +86,17 @@ const AddPeriodModal: React.FC<AddPeriodModalProps> = ({
         </CNavItem>
         <CNavItem>
           <CNavLink
-            active={activeTab === 'choix'}
-            onClick={() => setActiveTab('choix')}
+            active={activeTab === 'reclamation'}
+            onClick={() => setActiveTab('reclamation')}
             style={{ cursor: 'pointer' }}
           >
-            Choix de filière
+            Période de réclamation
           </CNavLink>
         </CNavItem>
       </CNav>
 
       <CTabContent>
-        <CTabPane visible={activeTab === 'depot' || activeTab === 'choix'}>
+        <CTabPane visible={activeTab === 'depot' || activeTab === 'reclamation'}>
           {/* Dates et heures */}
           <CRow>
             <CCol md={6}>

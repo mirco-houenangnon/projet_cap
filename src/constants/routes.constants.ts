@@ -13,8 +13,8 @@ export const AUTH_ROUTES = {
 export const INSCRIPTION_ROUTES = {
   BASE: 'inscription',
   // Dashboard
-  STATS: 'inscription/stats',
-  GRAPHES: 'inscription/graphes',
+  STATS: 'inscription/dashboard/stats',
+  GRAPHES: 'inscription/dashboard/graphes',
   // Pending Students
   PENDING_STUDENTS: 'inscription/pending-students',
   PENDING_STUDENT: (id: number | string) => `inscription/pending-students/${id}`,
@@ -44,6 +44,7 @@ export const INSCRIPTION_ROUTES = {
   CYCLES: 'inscription/cycles',
   FILIERES: 'inscription/filieres',
   NIVEAUX: 'inscription/niveaux',
+  NIVEAUX_ALL: 'inscription/niveaux/all',
   NEXT_DEADLINE: 'inscription/next-deadline',
   // Class Groups
   CLASS_GROUPS: 'inscription/class-groups',
@@ -92,11 +93,18 @@ export const COURS_ROUTES = {
   COURSE_RESOURCES: 'cours/course-resources',
   COURSE_RESOURCE: (id: number | string) => `cours/course-resources/${id}`,
   
+  // Course Element Professor Assignments
+  COURSE_ELEMENT_PROFESSORS_ASSIGNMENTS: 'cours/course-element-professors',
+  COURSE_ELEMENT_PROFESSOR_ASSIGNMENT: (id: number | string) => `cours/course-element-professors/${id}`,
+  COURSE_ELEMENT_ASSIGNMENTS: (courseElementId: number | string) => `cours/course-elements/${courseElementId}/assignments`,
+  COURSE_ELEMENT_PROFESSORS_RENEW: 'cours/course-element-professors/renew',
+  
   // Programs
   PROGRAMS: 'cours/programs',
   PROGRAM: (id: number | string) => `cours/programs/${id}`,
   PROGRAMS_BULK: 'cours/programs/bulk',
   PROGRAMS_COPY: 'cours/programs/copy',
+  PROGRAMS_RENEW: 'cours/programs/renew',
   
   // Utility routes
   CLASS_GROUP_PROGRAMS: (classGroupId: number | string) => `cours/class-groups/${classGroupId}/programs`,

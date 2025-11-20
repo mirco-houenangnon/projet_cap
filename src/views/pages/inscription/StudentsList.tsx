@@ -44,6 +44,7 @@ const StudentsList = () => {
   } = useStudentsListData()
 
   const [localSearchQuery, setLocalSearchQuery] = useState(searchQuery)
+  const [hasExistingGroups, setHasExistingGroups] = useState(false)
   const debouncedSearchQuery = useDebounce(localSearchQuery, 300)
 
   const detailsModal = useStudentDetails({
@@ -70,6 +71,31 @@ const StudentsList = () => {
     setSearchQuery(debouncedSearchQuery)
     setCurrentPage(1)
   }, [debouncedSearchQuery, setSearchQuery, setCurrentPage])
+
+  React.useEffect(() => {
+    const checkExistingGroups = async () => {
+      if (selectedYear !== 'all' && selectedFiliere !== 'all' && selectedNiveau !== 'all') {
+        try {
+          const academicYearId = parseInt(selectedYear, 10)
+          const departmentId = parseInt(selectedFiliere, 10)
+          
+          if (!isNaN(academicYearId) && !isNaN(departmentId)) {
+            const response = await InscriptionService.getClassGroups(
+              academicYearId,
+              departmentId,
+              selectedNiveau
+            )
+            setHasExistingGroups(response.data && response.data.length > 0)
+          }
+        } catch (error) {
+          setHasExistingGroups(false)
+        }
+      } else {
+        setHasExistingGroups(false)
+      }
+    }
+    checkExistingGroups()
+  }, [selectedYear, selectedFiliere, selectedNiveau])
 
   const handleFilterChange = useCallback(
     (name: string, option: { value: string } | null) => {
@@ -130,23 +156,11 @@ const StudentsList = () => {
       }
 
       try {
-        const academicYearObj = filterOptions.years.find(
-          (y: any) => typeof y === 'object' && y.libelle === selectedYear
-        )
-        const departmentObj = filterOptions.filieres.find(
-          (f: any) => typeof f === 'object' && (f.name === selectedFiliere || f.title === selectedFiliere)
-        )
+        // selectedYear et selectedFiliere sont déjà des IDs
+        const academicYearId = parseInt(selectedYear, 10)
+        const departmentId = parseInt(selectedFiliere, 10)
 
-        const academicYearId =
-          typeof academicYearObj === 'object' && academicYearObj.id
-            ? Number(academicYearObj.id)
-            : undefined
-        const departmentId =
-          typeof departmentObj === 'object' && departmentObj.id
-            ? Number(departmentObj.id)
-            : undefined
-
-        if (!academicYearId || !departmentId) {
+        if (isNaN(academicYearId) || isNaN(departmentId)) {
           throw new Error('Impossible de trouver les identifiants nécessaires')
         }
 
@@ -164,7 +178,8 @@ const StudentsList = () => {
             'all': 'Tous les groupes',
           }
           groups.forEach((g: any) => {
-            options[g.name] = `Groupe ${g.name}`
+            const groupName = g.group_name || g.name
+            options[groupName] = `Groupe ${groupName}`
           })
 
           const result = await Swal.fire({
@@ -180,7 +195,7 @@ const StudentsList = () => {
           if (!result.isConfirmed) return
           selectedGroupe = result.value !== 'all' ? result.value : undefined
         }
-        const blob = await InscriptionService.exportList(
+        const blobUrl = await InscriptionService.exportList(
           type,
           selectedYear,
           selectedFiliere,
@@ -188,14 +203,24 @@ const StudentsList = () => {
           selectedGroupe
         )
 
-        const url = window.URL.createObjectURL(blob)
+        // Récupérer les libellés pour le nom du fichier
+        const yearObj = filterOptions.years.find((y: any) => 
+          (typeof y === 'object' && String(y.id) === selectedYear) || String(y) === selectedYear
+        )
+        const filiereObj = filterOptions.filieres.find((f: any) => 
+          (typeof f === 'object' && String(f.id) === selectedFiliere) || String(f) === selectedFiliere
+        )
+        
+        const yearLabel = yearObj && typeof yearObj === 'object' ? (yearObj.libelle || yearObj.academic_year || selectedYear) : selectedYear
+        const filiereLabel = filiereObj && typeof filiereObj === 'object' ? (filiereObj.name || filiereObj.title || filiereObj.libelle || selectedFiliere) : selectedFiliere
+
         const link = document.createElement('a')
-        link.href = url
-        link.download = `${type}-${selectedYear}-${selectedFiliere}-${selectedNiveau}${
+        link.href = blobUrl
+        link.download = `${type}-${yearLabel}-${filiereLabel}-Niveau${selectedNiveau}${
           selectedGroupe ? `-Groupe${selectedGroupe}` : ''
         }.pdf`
         link.click()
-        window.URL.revokeObjectURL(url)
+        window.URL.revokeObjectURL(blobUrl)
 
         Swal.fire({
           icon: 'success',
@@ -224,15 +249,17 @@ const StudentsList = () => {
         <CCardHeader className="d-flex justify-content-between align-items-center">
           <span className="fw-bold">Liste des Étudiants</span>
           <div>
-            <CButton
-              color="success"
-              variant="outline"
-              size="sm"
-              className="me-2"
-              onClick={handleCreateGroups}
-            >
-              Créer des groupes
-            </CButton>
+            {!hasExistingGroups && (
+              <CButton
+                color="success"
+                variant="outline"
+                size="sm"
+                className="me-2"
+                onClick={handleCreateGroups}
+              >
+                Créer des groupes
+              </CButton>
+            )}
             <CButton
               color="primary"
               variant="outline"

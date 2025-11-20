@@ -60,8 +60,24 @@ const PendingStudents: React.FC = () => {
     { value: 'Défavorable', label: 'Défavorable' },
   ]
 
-  const specialFilieres: string[] = ['Droit', 'Médecine', 'Informatique']
-  const isSpecialFiliere: boolean = specialFilieres.includes(selectedFiliere)
+  const selectedFiliereOption = filterOptions.filieres.find(
+    (f) => {
+      if (typeof f === 'string') return f === selectedFiliere
+      return String(f.id) === selectedFiliere
+    }
+  )
+  const filiereName = selectedFiliereOption
+    ? typeof selectedFiliereOption === 'string'
+      ? selectedFiliereOption
+      : (selectedFiliereOption.name || selectedFiliereOption.title || selectedFiliereOption.libelle || '')
+    : ''
+  const isSpecialFiliere: boolean = filiereName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .includes('prepa')
+
+    console.log(isSpecialFiliere, filiereName)
 
   useEffect(() => {
     setSearchQuery(debouncedSearchQuery)
@@ -97,13 +113,13 @@ const PendingStudents: React.FC = () => {
     []
   )
 
-  const handleOpenDocument = useCallback((documentUrl: string): void => {
+  const handleOpenDocument = useCallback(async (documentUrl: string): Promise<void> => {
     if (documentUrl) {
-      window.open(documentUrl, '_blank')
+      const { openFileInNewTab } = await import('../../../utils/fileViewer')
+      openFileInNewTab(documentUrl)
     }
   }, [])
 
-  // Handler pour changer d'opinion
   const handleOpinionChange = useCallback(
     (studentId: number, type: string, value: string): void => {
       setEditedData((prev) =>
@@ -146,16 +162,34 @@ const PendingStudents: React.FC = () => {
   )
 
   const handleSelectStudent = useCallback((studentId: number): void => {
+    const student = editedData.find(s => s.id === studentId);
+    if (!student) return;
+    const hasCucaComplete = student.opinionCuca && student.commentaireCuca;
+    const hasCuoComplete = student.opinionCuo && student.commentaireCuo;
+    
+    if (!hasCucaComplete && !hasCuoComplete) {
+      return;
+    }
+    
     setSelectedStudents((prev) =>
       prev.includes(studentId)
         ? prev.filter((id) => id !== studentId)
         : [...prev, studentId]
     )
-  }, [])
+  }, [editedData])
 
   const handleSelectAll = useCallback(
     (checked: boolean): void => {
-      setSelectedStudents(checked ? editedData.map((student) => student.id) : [])
+      if (checked) {
+        const selectableStudents = editedData.filter(student => {
+          const hasCucaComplete = student.opinionCuca && student.commentaireCuca;
+          const hasCuoComplete = student.opinionCuo && student.commentaireCuo;
+          return hasCucaComplete || hasCuoComplete;
+        });
+        setSelectedStudents(selectableStudents.map(s => s.id));
+      } else {
+        setSelectedStudents([]);
+      }
     },
     [editedData]
   )
@@ -261,7 +295,6 @@ const PendingStudents: React.FC = () => {
       if (result.success && result.url) {
         const a = document.createElement('a')
         a.href = result.url
-        a.download = `pending_students.${format}`
         a.click()
         Swal.fire({
           icon: 'success',

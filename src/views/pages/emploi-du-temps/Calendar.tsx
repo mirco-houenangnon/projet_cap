@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from 'react'
+import React, { useState, useRef } from 'react'
 import {
   CCard,
   CCardBody,
@@ -27,8 +27,8 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 import frLocale from '@fullcalendar/core/locales/fr'
 import { useScheduledCourses } from '@/hooks/emploi-du-temps'
-import { ConflictBadge, ProgressBar } from '@/components/emploi-du-temps'
-import type { CalendarEvent, CreateScheduledCourseRequest } from '@/types/emploi-du-temps.types'
+import { ConflictBadge } from '@/components/emploi-du-temps'
+import type { CreateScheduledCourseRequest } from '@/types/emploi-du-temps.types'
 import Swal from 'sweetalert2'
 import './Calendar.scss'
 
@@ -41,7 +41,6 @@ const Calendar: React.FC = () => {
     createScheduledCourse,
     updateScheduledCourse,
     cancelCourse,
-    deleteCourse,
   } = useScheduledCourses()
 
   const [showModal, setShowModal] = useState(false)
@@ -60,9 +59,33 @@ const Calendar: React.FC = () => {
   const [checkingConflicts, setCheckingConflicts] = useState(false)
 
   // Convertir les cours planifiés en événements FullCalendar
-  const events: CalendarEvent[] = scheduledCourses.map((course) => {
+  const events = scheduledCourses.map((course) => {
     const startDate = new Date(course.start_date)
     const timeSlot = course.time_slot
+    
+    if (!timeSlot) {
+      return {
+        id: course.id.toString(),
+        title: `${course.course_element?.name || 'Cours'} - ${course.class_group?.group_name || ''}`,
+        start: startDate,
+        end: startDate,
+        backgroundColor: '#6c757d',
+        borderColor: '#6c757d',
+        textColor: '#ffffff',
+        resource: {
+          scheduledCourseId: course.id,
+          roomName: course.room?.name || '',
+          roomCode: course.room?.code || '',
+          professorName: course.professor
+            ? `${course.professor.first_name} ${course.professor.last_name}`
+            : '',
+          classGroupName: course.class_group?.group_name || '',
+          courseElementName: course.course_element?.name || '',
+          is_cancelled: course.is_cancelled,
+          progress_percentage: course.progress_percentage,
+        },
+      }
+    }
     
     // Construire la date/heure de début
     const [startHour, startMinute] = timeSlot.start_time.split(':')
@@ -74,7 +97,7 @@ const Calendar: React.FC = () => {
     endDate.setHours(parseInt(endHour), parseInt(endMinute))
 
     return {
-      id: course.id,
+      id: course.id.toString(),
       title: `${course.course_element?.name || 'Cours'} - ${course.class_group?.group_name || ''}`,
       start: startDate,
       end: endDate,

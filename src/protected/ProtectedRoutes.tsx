@@ -20,8 +20,7 @@ const rolePermissions = {
     finance: false
   },
   'chef-division': {
-    finance: false,
-    rh: false
+    finance: false
   },
   'comptable': {
     attestation: false,
@@ -33,6 +32,17 @@ const rolePermissions = {
     notes: false,
     presence: false,
     soutenance: false
+  },
+  'professeur': {
+    attestation: false,
+    bibliotheque: false,
+    cahier: false,
+    cours: false,
+    emploi: false,
+    inscription: false,
+    presence: false,
+    soutenance: false,
+    finance: false
   }
 };
 
@@ -51,7 +61,7 @@ interface ProtectedRouteProps {
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, module }) => {
   const { isAuthenticated, isLoading, role } = useAuth();
   const navigate = useNavigate();
-  const [showModal, setShowModal] = useState(false);
+
 
   if (isLoading) {
     return <LoadingSpinner message="Vérification de l'authentification..." />;
@@ -61,12 +71,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, module }) => 
     return <Navigate to={FRONTEND_ROUTES.LOGIN} replace />;
   }
 
+  // Redirection automatique des professeurs vers les notes
+  if (role === 'professeur' && window.location.pathname === FRONTEND_ROUTES.PORTAIL) {
+    return <Navigate to="/notes/professor/dashboard" replace />;
+  }
+
   if (module && !isAllowed(role, module)) {
     return (
-      <CModal visible={showModal} onClose={() => {
-        setShowModal(false);
-        navigate(FRONTEND_ROUTES.PORTAIL);
-      }}>
+      <CModal visible={true} onClose={() => navigate(FRONTEND_ROUTES.PORTAIL)}>
         <CModalHeader>
           <CModalTitle>Accès non autorisé</CModalTitle>
         </CModalHeader>
@@ -74,10 +86,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, module }) => 
           Vous n'avez pas les droits nécessaires pour accéder à ce module ({module}).
         </CModalBody>
         <CModalFooter>
-          <CButton color="primary" onClick={() => {
-            setShowModal(false);
-            navigate(FRONTEND_ROUTES.PORTAIL);
-          }}>
+          <CButton color="primary" onClick={() => navigate(FRONTEND_ROUTES.PORTAIL)}>
             Retour au portail
           </CButton>
         </CModalFooter>

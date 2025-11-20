@@ -3,6 +3,7 @@ export { default as useCourseElements } from './useCourseElements'
 export { default as useCourseResources } from './useCourseResources'
 export { default as usePrograms } from './usePrograms'
 export { default as useCoursDashboard } from './useCoursDashboard'
+export { useCourseElementProfessors } from './useCourseElementProfessors'
 
 export type { useTeachingUnits as UseTeachingUnitsHook } from './useTeachingUnits'
 export type { useCourseElements as UseCourseElementsHook } from './useCourseElements'

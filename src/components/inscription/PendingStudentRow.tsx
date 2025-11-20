@@ -63,7 +63,11 @@ const PendingStudentRow: React.FC<PendingStudentRowProps> = ({
     <CTableRow>
       {/* Checkbox Sélection */}
       <CTableDataCell>
-        <CFormCheck checked={isSelected} onChange={() => onSelectStudent(student.id)} />
+        <CFormCheck 
+          checked={isSelected} 
+          onChange={() => onSelectStudent(student.id)}
+          disabled={!student.opinionCuca && !student.opinionCuo}
+        />
       </CTableDataCell>
 
       {/* Numéro */}
@@ -73,24 +77,18 @@ const PendingStudentRow: React.FC<PendingStudentRowProps> = ({
       <CTableDataCell>{student.first_name + ' ' + student.last_name}</CTableDataCell>
 
       {/* Pièces */}
-      <CTableDataCell>
-        <div style={{ maxWidth: '200px' }}>
-          {student.pieces && student.pieces.length > 0 ? (
-            student.pieces.map((piece, pieceIndex) => (
+      <CTableDataCell style={{ minWidth: '250px' }}>
+        <div>
+          {student.documents && Object.keys(student.documents).length > 0 ? (
+            Object.entries(student.documents).map(([name, path], pieceIndex) => (
               <div key={pieceIndex} className="mb-1">
                 <CBadge
                   color="primary"
                   className="cursor-pointer text-decoration-underline"
-                  onClick={() =>
-                    onOpenDocument(
-                      typeof piece === 'string' ? piece : piece.url || ''
-                    )
-                  }
-                  style={{ cursor: 'pointer' }}
+                  onClick={() => onOpenDocument(String(path))}
+                  style={{ cursor: 'pointer', whiteSpace: 'normal', textAlign: 'left' }}
                 >
-                  {typeof piece === 'string'
-                    ? `Pièce ${pieceIndex + 1}`
-                    : piece.name || `Pièce ${pieceIndex + 1}`}
+                  {name}
                 </CBadge>
               </div>
             ))

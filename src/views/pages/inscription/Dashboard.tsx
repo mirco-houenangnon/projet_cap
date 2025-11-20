@@ -232,17 +232,18 @@ const Dashboard = () => {
           <Select
             options={yearOptions}
             value={yearOptions.find(
-              (opt) => opt.value.toString() === selectedYear.toString()
+              (opt) => opt.value?.toString() === selectedYear?.toString()
             )}
-            onChange={(option: any) => setSelectedYear(option?.value?.toString() || '')}
+            onChange={(option: any) => setSelectedYear(option?.value?.toString() || null)}
             placeholder="Sélectionner une année..."
             isSearchable
+            isClearable
           />
         </CCol>
       </CRow>
       <CRow className="mb-4">
         <ChartCard
-          title="Nombre d'inscrits par Filière"
+          title="Nombre de dossiers par Filière"
           type="bar"
           data={inscritsChartData}
           options={chartOptions}
@@ -258,14 +259,14 @@ const Dashboard = () => {
         />
       </CRow>
 
-      <CRow className="mb-4">
+      /*<CRow className="mb-4">
         <ChartCard
           title="Nombre d'Inscrits par Cycle"
           type="bar"
           data={cyclesChartData}
           options={chartOptions}
         />
-      </CRow>
+      </CRow>*/
 
       <DashboardTable
         title="Années Académiques"

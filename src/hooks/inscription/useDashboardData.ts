@@ -20,7 +20,7 @@ const useDashboardData = () => {
         dossiersParStatut: [],
         anneeAcademique: ''
     });
-    const [selectedYear, setSelectedYear] = useState<string>('');
+    const [selectedYear, setSelectedYear] = useState<string | null>(null);
     const [loading, setLoading] = useState<boolean>(true);
     const [error, setError] = useState<string | null>(null);
 
@@ -75,7 +75,7 @@ const useDashboardData = () => {
 
     // Refetch graphes quand l'année change
     useEffect(() => {
-        if (selectedYear) {
+        if (selectedYear !== null) {
             const fetchGraphes = async () => {
                 const graphesRes = await InscriptionService.graphes(selectedYear);
                 setGraphesData(graphesRes);

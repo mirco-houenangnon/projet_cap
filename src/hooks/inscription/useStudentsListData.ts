@@ -5,7 +5,7 @@ import { StudentListItem, StudentDetails, FilterOptions } from '../../types/insc
 
 const useStudentsListData = () => {
   const [students, setStudents] = useState<StudentListItem[]>([]);
-  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ years: [], filieres: [], entryDiplomas: [], redoublants: ['all', 'oui', 'non'], niveaux: {} });
+  const [filterOptions, setFilterOptions] = useState<FilterOptions>({ years: [], filieres: [], entryDiplomas: [], redoublants: ['all', 'oui', 'non'], niveaux: [] });
   const [selectedYear, setSelectedYear] = useState('all');
   const [selectedFiliere, setSelectedFiliere] = useState('all');
   const [selectedEntryDiploma, setSelectedEntryDiploma] = useState('all');
@@ -29,7 +29,7 @@ const useStudentsListData = () => {
           years: options.years || [],
           filieres: options.filieres || [],
           entryDiplomas: options.entryDiplomas || [],
-          niveaux: options.niveaux || {},
+          niveaux: options.niveaux || [],
           redoublants: ['all', 'oui', 'non'],
         });
 

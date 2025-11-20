@@ -60,12 +60,12 @@ const PendingStudentsTable: React.FC<PendingStudentsTableProps> = ({
   }
 
   return (
-    <CTable
-      className="table table-bordered table-striped table-hover"
-      style={{ fontSize: '0.9rem' }}
-      align="middle"
-      responsive
-    >
+    <div style={{ overflowX: 'auto' }}>
+      <CTable
+        className="table table-bordered table-striped table-hover"
+        style={{ fontSize: '0.9rem', minWidth: '1500px' }}
+        align="middle"
+      >
       <CTableHead className="text-nowrap">
         <CTableRow>
           {/* Checkbox select all */}
@@ -119,6 +119,7 @@ const PendingStudentsTable: React.FC<PendingStudentsTableProps> = ({
         ))}
       </CTableBody>
     </CTable>
+    </div>
   )
 }
 

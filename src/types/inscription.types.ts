@@ -143,6 +143,7 @@ export interface PendingStudentData {
     name?: string;
     url?: string;
   }>;
+  documents?: Record<string, string>;
   opinionCuca?: string;
   commentaireCuca?: string;
   opinionCuo?: string;
@@ -161,6 +162,8 @@ export interface Period {
   type: 'depot' | 'choix';
   date_heure_debut: string;
   date_heure_fin: string;
+  start: string;
+  end: string;
   filieres: any[];
 }
 
@@ -208,7 +211,7 @@ export interface FilterOptions {
   filieres: Array<string | FilterOptionItem>;
   entryDiplomas: Array<string | FilterOptionItem>;
   redoublants: string[];
-  niveaux: Record<string, Array<string | FilterOptionItem>>;
+  niveaux: Array<{ value: string; label: string }>;
 }
 
 // Filter options for pending students (includes statuts instead of redoublants)
@@ -217,5 +220,5 @@ export interface PendingStudentsFilterOptions {
   filieres: Array<string | FilterOptionItem>;
   entryDiplomas: Array<string | FilterOptionItem>;
   statuts: Array<{ value: string; label: string }>;
-  niveaux: Record<string, Array<string | FilterOptionItem>>;
+  niveaux: Array<{ value: string; label: string }>;
 }

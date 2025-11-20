@@ -81,9 +81,9 @@ const PeriodsModal: React.FC<PeriodsModalProps> = ({
                         </span>
                       </div>
                       <div className="text-muted small">
-                        <strong>Début:</strong> {period.date_heure_debut}
+                        <strong>Début:</strong> {period.start}
                         <br />
-                        <strong>Fin:</strong> {period.date_heure_fin}
+                        <strong>Fin:</strong> {period.end}
                         <br />
                         {period.filieres && period.filieres.length > 0 && (
                           <>

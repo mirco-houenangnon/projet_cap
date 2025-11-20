@@ -5,6 +5,8 @@ import {
   cilBookmark,
   cilFolder,
   cilCalendar,
+  cilLink,
+  cilInfo,
 } from '@coreui/icons'
 import { CNavItem, CNavTitle } from '@coreui/react'
 
@@ -39,9 +41,21 @@ const coursNavigation = [
   },
   {
     component: CNavItem,
+    name: 'Associations Matière-Professeur',
+    to: '/cours/course-element-professors',
+    icon: <CIcon icon={cilLink} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
     name: 'Programmes de Cours',
     to: '/cours/programs',
     icon: <CIcon icon={cilCalendar} customClassName="nav-icon" />,
+  },
+  {
+    component: CNavItem,
+    name: 'Manuel d\'Utilisation',
+    to: '/cours/user-guide',
+    icon: <CIcon icon={cilInfo} customClassName="nav-icon" />,
   },
 ]
 

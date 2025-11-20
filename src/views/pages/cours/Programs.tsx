@@ -19,7 +19,6 @@ import {
   CModalTitle,
   CForm,
   CFormInput,
-  CFormLabel,
   CFormSelect,
   CAlert,
   CBadge,
@@ -27,8 +26,6 @@ import {
   CDropdownToggle,
   CDropdownMenu,
   CDropdownItem,
-  CInputGroup,
-  CInputGroupText,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import {
@@ -43,15 +40,15 @@ import {
   cilSchool,
 } from '@coreui/icons'
 import { usePrograms } from '@/hooks/cours'
-import type { Program, CourseElement, Professor, ClassGroup } from '@/types/cours.types'
+import SearchableSelect from '@/components/forms/SearchableSelect'
+import type { Program } from '@/types/cours.types'
 
 const Programs: React.FC = () => {
   // Hook personnalisé pour gérer les données et les actions
   const {
     programs,
-    courseElements,
-    professors,
     classGroups,
+    courseElementProfessors,
     loading,
     error,
     createProgram,
@@ -59,10 +56,7 @@ const Programs: React.FC = () => {
     deleteProgram,
     updateFilters,
     resetFilters,
-    setError,
-    validateWeighting,
-    getTotalWeighting,
-    renderWeightingBadges
+    setError
   } = usePrograms()
 
   // États locaux pour l'interface utilisateur
@@ -70,14 +64,7 @@ const Programs: React.FC = () => {
   const [editingProgram, setEditingProgram] = useState<Program | null>(null)
   const [formData, setFormData] = useState({
     class_group_id: '',
-    course_element_id: '',
-    professor_id: '',
-    weighting: {
-      CC: 0,
-      TP: 0,
-      PROJET: 0,
-      EXAMEN: 0,
-    },
+    course_element_professor_id: '',
   })
   const [searchTerm, setSearchTerm] = useState('')
   const [classFilter, setClassFilter] = useState('')
@@ -89,22 +76,13 @@ const Programs: React.FC = () => {
       setEditingProgram(program)
       setFormData({
         class_group_id: program.class_group_id.toString(),
-        course_element_id: program.course_element?.id?.toString() || '',
-        professor_id: program.professor?.id?.toString() || '',
-        weighting: { ...program.weighting },
+        course_element_professor_id: program.course_element_professor_id.toString(),
       })
     } else {
       setEditingProgram(null)
       setFormData({
         class_group_id: '',
-        course_element_id: '',
-        professor_id: '',
-        weighting: {
-          CC: 0,
-          TP: 0,
-          PROJET: 0,
-          EXAMEN: 0,
-        },
+        course_element_professor_id: '',
       })
     }
     setShowModal(true)
@@ -115,63 +93,33 @@ const Programs: React.FC = () => {
     setEditingProgram(null)
     setFormData({
       class_group_id: '',
-      course_element_id: '',
-      professor_id: '',
-      weighting: {
-        CC: 0,
-        TP: 0,
-        PROJET: 0,
-        EXAMEN: 0,
-      },
+      course_element_professor_id: '',
     })
   }
 
-  const handleWeightingChange = (key: string, value: number) => {
-    setFormData({
-      ...formData,
-      weighting: {
-        ...formData.weighting,
-        [key]: value,
-      },
-    })
-  }
 
-  const getTotalWeighting = () => {
-    return Object.values(formData.weighting).reduce((sum, value) => sum + value, 0)
-  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    const total = getTotalWeighting(formData.weighting)
-    if (total !== 100) {
-      setAlert({ 
-        type: 'danger', 
-        message: `La somme des pondérations doit être égale à 100% (actuellement: ${total}%)` 
-      })
-      setTimeout(() => setAlert(null), 5000)
-      return
-    }
-    
     try {
-      const data = {
-        class_group_id: parseInt(formData.class_group_id),
-        course_element_professor_id: 1, // TODO: Gérer la relation course_element + professor
-        weighting: formData.weighting,
-      }
-      
       if (editingProgram) {
-        // Update existing program
-        await updateProgram(editingProgram.id, { weighting: formData.weighting })
+        const data = {
+          weighting: editingProgram.weighting,
+        }
+        await updateProgram(editingProgram.id, data)
         setAlert({ type: 'success', message: 'Programme mis à jour avec succès!' })
       } else {
-        // Create new program
+        const data = {
+          class_group_id: parseInt(formData.class_group_id),
+          course_element_professor_id: parseInt(formData.course_element_professor_id),
+          academic_year_id: 1, // TODO: Get from context or form
+          weighting: { CC: 30, TP: 20, EXAMEN: 50 },
+        }
         await createProgram(data)
         setAlert({ type: 'success', message: 'Programme créé avec succès!' })
       }
       handleCloseModal()
-      
-      // Auto-hide alert after 5 seconds
       setTimeout(() => setAlert(null), 5000)
     } catch (error) {
       console.error('Erreur handleSubmit:', error)
@@ -268,7 +216,7 @@ const Programs: React.FC = () => {
                     onChange={(e) => handleClassFilterChange(e.target.value)}
                   >
                     <option value="">Toutes les classes</option>
-                    {classGroups.map((group) => (
+                    {(classGroups || []).map((group) => (
                       <option key={group.id} value={group.id}>
                         {group.name}
                       </option>
@@ -337,7 +285,7 @@ const Programs: React.FC = () => {
                         <CTableDataCell>
                           <CBadge color="success">
                             <CIcon icon={cilUser} className="me-1" size="sm" />
-                            {program.professor?.name}
+                            {program.professor?.full_name}
                           </CBadge>
                         </CTableDataCell>
                         <CTableDataCell>
@@ -387,141 +335,33 @@ const Programs: React.FC = () => {
         </CModalHeader>
         <CForm onSubmit={handleSubmit}>
           <CModalBody>
-            <CRow>
-              <CCol md={6}>
-                <div className="mb-3">
-                  <CFormLabel htmlFor="class_group_id">Classe *</CFormLabel>
-                  <CFormSelect
-                    id="class_group_id"
-                    value={formData.class_group_id}
-                    onChange={(e) => setFormData({ ...formData, class_group_id: e.target.value })}
-                    required
-                  >
-                    <option value="">Sélectionner une classe</option>
-                    {classGroups.map((group) => (
-                      <option key={group.id} value={group.id}>
-                        {group.name}
-                      </option>
-                    ))}
-                  </CFormSelect>
-                </div>
-              </CCol>
-              <CCol md={6}>
-                <div className="mb-3">
-                  <CFormLabel htmlFor="course_element_id">Cours (ECUE) *</CFormLabel>
-                  <CFormSelect
-                    id="course_element_id"
-                    value={formData.course_element_id}
-                    onChange={(e) => setFormData({ ...formData, course_element_id: e.target.value })}
-                    required
-                  >
-                    <option value="">Sélectionner un cours</option>
-                    {courseElements.map((element) => (
-                      <option key={element.id} value={element.id}>
-                        {element.code} - {element.name}
-                      </option>
-                    ))}
-                  </CFormSelect>
-                </div>
-              </CCol>
-            </CRow>
-            <div className="mb-3">
-              <CFormLabel htmlFor="professor_id">Professeur *</CFormLabel>
-              <CFormSelect
-                id="professor_id"
-                value={formData.professor_id}
-                onChange={(e) => setFormData({ ...formData, professor_id: e.target.value })}
-                required
-              >
-                <option value="">Sélectionner un professeur</option>
-                {professors.map((professor) => (
-                  <option key={professor.id} value={professor.id}>
-                    {professor.name}
-                  </option>
-                ))}
-              </CFormSelect>
-            </div>
-            
-            <div className="mb-3">
-              <CFormLabel>Pondération des évaluations *</CFormLabel>
-              <div className="text-muted small mb-2">
-                La somme doit être égale à 100%
-              </div>
-              <CRow>
-                <CCol md={6}>
-                  <CInputGroup className="mb-2">
-                    <CInputGroupText>CC</CInputGroupText>
-                    <CFormInput
-                      type="number"
-                      value={formData.weighting.CC}
-                      onChange={(e) => handleWeightingChange('CC', parseInt(e.target.value) || 0)}
-                      min="0"
-                      max="100"
-                    />
-                    <CInputGroupText>%</CInputGroupText>
-                  </CInputGroup>
-                </CCol>
-                <CCol md={6}>
-                  <CInputGroup className="mb-2">
-                    <CInputGroupText>TP</CInputGroupText>
-                    <CFormInput
-                      type="number"
-                      value={formData.weighting.TP}
-                      onChange={(e) => handleWeightingChange('TP', parseInt(e.target.value) || 0)}
-                      min="0"
-                      max="100"
-                    />
-                    <CInputGroupText>%</CInputGroupText>
-                  </CInputGroup>
-                </CCol>
-              </CRow>
-              <CRow>
-                <CCol md={6}>
-                  <CInputGroup className="mb-2">
-                    <CInputGroupText>PROJET</CInputGroupText>
-                    <CFormInput
-                      type="number"
-                      value={formData.weighting.PROJET}
-                      onChange={(e) => handleWeightingChange('PROJET', parseInt(e.target.value) || 0)}
-                      min="0"
-                      max="100"
-                    />
-                    <CInputGroupText>%</CInputGroupText>
-                  </CInputGroup>
-                </CCol>
-                <CCol md={6}>
-                  <CInputGroup className="mb-2">
-                    <CInputGroupText>EXAMEN</CInputGroupText>
-                    <CFormInput
-                      type="number"
-                      value={formData.weighting.EXAMEN}
-                      onChange={(e) => handleWeightingChange('EXAMEN', parseInt(e.target.value) || 0)}
-                      min="0"
-                      max="100"
-                    />
-                    <CInputGroupText>%</CInputGroupText>
-                  </CInputGroup>
-                </CCol>
-              </CRow>
-              <div className="text-end">
-                <CBadge 
-                  color={getTotalWeighting() === 100 ? 'success' : 'danger'}
-                  className="fs-6"
-                >
-                  Total: {getTotalWeighting()}%
-                </CBadge>
-              </div>
-            </div>
+            <SearchableSelect
+              id="class_group_id"
+              label="Classe"
+              value={formData.class_group_id}
+              onChange={(value) => setFormData({ ...formData, class_group_id: value.toString() })}
+              options={classGroups.map(g => ({ value: g.id, label: g.name }))}
+              placeholder="Sélectionner une classe"
+              required
+            />
+            <SearchableSelect
+              id="course_element_professor_id"
+              label="Association Matière-Professeur"
+              value={formData.course_element_professor_id}
+              onChange={(value) => setFormData({ ...formData, course_element_professor_id: value.toString() })}
+              options={(courseElementProfessors || []).map(a => ({
+                value: a.id,
+                label: `${a.course_element?.code} - ${a.course_element?.name} (${a.professor?.full_name})`
+              }))}
+              placeholder="Sélectionner une association"
+              required
+            />
           </CModalBody>
           <CModalFooter>
             <CButton color="secondary" onClick={handleCloseModal}>
               Annuler
             </CButton>
-            <CButton 
-              color="primary" 
-              type="submit"
-              disabled={getTotalWeighting() !== 100}
-            >
+            <CButton color="primary" type="submit">
               {editingProgram ? 'Mettre à jour' : 'Créer'}
             </CButton>
           </CModalFooter>

@@ -6,7 +6,6 @@ import type {
   CreateCourseElementRequest,
   UpdateCourseElementRequest,
   CourseElementFilters,
-  PaginatedResponse
 } from '@/types/cours.types'
 
 export const useCourseElements = (initialFilters: CourseElementFilters = {}) => {
@@ -24,33 +23,37 @@ export const useCourseElements = (initialFilters: CourseElementFilters = {}) => 
   const [error, setError] = useState<string | null>(null)
   const [filters, setFilters] = useState<CourseElementFilters>(initialFilters)
 
-  const fetchCourseElements = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const response: PaginatedResponse<CourseElement> = await CoursService.getCourseElements(filters)
-      
-      setCourseElements(response.data)
-      setPagination({
-        current_page: response.current_page,
-        last_page: response.last_page,
-        per_page: response.per_page,
-        total: response.total,
-        from: response.from,
-        to: response.to
-      })
-    } catch (err: any) {
-      setError(err?.response?.data?.message || 'Erreur lors du chargement des éléments de cours')
-      console.error('Erreur fetchCourseElements:', err)
-    } finally {
-      setLoading(false)
-    }
-  }, [filters])
+const fetchCourseElements = useCallback(async () => {
+  try {
+    setLoading(true)
+    setError(null)
+    
+    // CORRECTION: response est de type ApiResponse<CourseElement[]>
+    const response = await CoursService.getCourseElements(filters)
+    console.log('Réponse API:', response)
+    
+    // CORRECTION: Les données sont dans response.data, la pagination dans response.meta
+    setCourseElements(response.data || [])
+    setPagination({
+      current_page: response.meta?.current_page || 1,
+      last_page: response.meta?.last_page || 1,
+      per_page: response.meta?.per_page || 15,
+      total: response.meta?.total || 0,
+      from: response.meta?.from || 0,
+      to: response.meta?.to || 0
+    })
+  } catch (err: any) {
+    setError(err?.response?.data?.message || 'Erreur lors du chargement des éléments de cours')
+    console.error('Erreur fetchCourseElements:', err)
+  } finally {
+    setLoading(false)
+  }
+}, [filters])
 
   const fetchTeachingUnits = useCallback(async () => {
     try {
       const response = await CoursService.getTeachingUnits({ per_page: 100 }) // Get all for select options
-      setTeachingUnits(response.data)
+      setTeachingUnits(response.data || [])
     } catch (err: any) {
       console.error('Erreur fetchTeachingUnits:', err)
     }
@@ -99,7 +102,7 @@ export const useCourseElements = (initialFilters: CourseElementFilters = {}) => 
     setFilters(initialFilters)
   }, [initialFilters])
 
-  const goToPage = useCallback((page: number) => {
+  const goToPage = useCallback((_page: number) => {
     updateFilters({ per_page: filters.per_page || 15 })
   }, [filters.per_page, updateFilters])
 

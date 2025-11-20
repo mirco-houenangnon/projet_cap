@@ -280,7 +280,7 @@ export interface Program {
 // ============================================
 
 export interface CalendarEvent {
-  id: number
+  id: string
   title: string
   start: Date
   end: Date

@@ -6,8 +6,8 @@ import type {
   CreateCourseResourceRequest,
   UpdateCourseResourceRequest,
   CourseResourceFilters,
-  PaginatedResponse
 } from '@/types/cours.types'
+import type { ApiResponse } from '@/types'
 
 export const useCourseResources = (initialFilters: CourseResourceFilters = {}) => {
   const [courseResources, setCourseResources] = useState<CourseResource[]>([])
@@ -28,16 +28,17 @@ export const useCourseResources = (initialFilters: CourseResourceFilters = {}) =
     try {
       setLoading(true)
       setError(null)
-      const response: PaginatedResponse<CourseResource> = await CoursService.getCourseResources(filters)
+      const response: ApiResponse<CourseResource[]> = await CoursService.getCourseResources(filters)
       
-      setCourseResources(response.data)
+      setCourseResources(response.data || [])
+      const meta = response.meta
       setPagination({
-        current_page: response.current_page,
-        last_page: response.last_page,
-        per_page: response.per_page,
-        total: response.total,
-        from: response.from,
-        to: response.to
+        current_page: meta?.current_page ?? 1,
+        last_page: meta?.last_page ?? 1,
+        per_page: meta?.per_page ?? (filters.per_page || 15),
+        total: meta?.total ?? 0,
+        from: meta?.from ?? 0,
+        to: meta?.to ?? 0,
       })
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Erreur lors du chargement des ressources')
@@ -49,8 +50,8 @@ export const useCourseResources = (initialFilters: CourseResourceFilters = {}) =
 
   const fetchCourseElements = useCallback(async () => {
     try {
-      const response = await CoursService.getCourseElements({ per_page: 100 }) // Get all for select options
-      setCourseElements(response.data)
+      const response: ApiResponse<CourseElement[]> = await CoursService.getCourseElements({ per_page: 100 }) // Get all for select options
+      setCourseElements(response.data || [])
     } catch (err: any) {
       console.error('Erreur fetchCourseElements:', err)
     }
@@ -99,7 +100,7 @@ export const useCourseResources = (initialFilters: CourseResourceFilters = {}) =
     setFilters(initialFilters)
   }, [initialFilters])
 
-  const goToPage = useCallback((page: number) => {
+  const goToPage = useCallback((_page: number) => {
     updateFilters({ per_page: filters.per_page || 15 })
   }, [filters.per_page, updateFilters])
 

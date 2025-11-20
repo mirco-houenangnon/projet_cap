@@ -7,6 +7,8 @@ export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 export const PHONE_REGEX = /^[\d\s+()-]+$/
 export const MATRICULE_REGEX = /^[A-Z0-9]+$/
 export const NAME_REGEX = /^[a-zA-ZÀ-ÿ\s'-]+$/
+export const IFU_REGEX = /^\d{13}$/
+export const RIB_REGEX = /^[A-Z0-9]{22,27}$/
 
 // Longueurs minimales
 export const MIN_LENGTH = {
@@ -16,6 +18,8 @@ export const MIN_LENGTH = {
   PASSWORD: 8,
   MATRICULE: 4,
   SEARCH: 2,
+  IFU: 13,
+  RIB: 22,
 } as const
 
 // Longueurs maximales
@@ -27,6 +31,8 @@ export const MAX_LENGTH = {
   MATRICULE: 20,
   DESCRIPTION: 500,
   COMMENT: 1000,
+  IFU: 13,
+  RIB: 27,
 } as const
 
 // Plages de valeurs
@@ -74,4 +80,6 @@ export const DEFAULT_ERROR_MESSAGES = {
   INVALID_FORMAT: 'Format invalide',
   FILE_TOO_LARGE: 'Fichier trop volumineux',
   INVALID_FILE_TYPE: 'Type de fichier non accepté',
+  INVALID_IFU: 'Le numéro IFU doit contenir exactement 13 chiffres',
+  INVALID_RIB: 'Le RIB doit contenir entre 22 et 27 caractères',
 } as const

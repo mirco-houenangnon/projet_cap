@@ -33,7 +33,7 @@ export class HttpService {
       baseURL: API_URL,
       timeout: 30000,
       headers: {
-        'Content-Type': 'application/json',
+        // 'Content-Type': 'application/json',
         Accept: 'application/json',
       },
     });
@@ -54,55 +54,85 @@ export class HttpService {
   };
 
   get = async <T = any>(url: string): Promise<T> => {
-    return await this.request<T>(this.getOptionsConfig('get', url));
+    return await this.request<T>(this.getOptionsConfig('get' as const, url));
   };
 
-  post = async <T = any>(url: string, data?: any): Promise<T> => {
-    return await this.request<T>(this.getOptionsConfig('post', url, data));
+  post = async <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> => {
+    return await this.request<T>(this.getOptionsConfig('post' as const, url, data, config));
   };
 
   put = async <T = any>(url: string, data?: any): Promise<T> => {
-    return await this.request<T>(this.getOptionsConfig('put', url, data));
+    return await this.request<T>(this.getOptionsConfig('put' as const, url, data));
   };
 
   patch = async <T = any>(url: string, data?: any): Promise<T> => {
-    return await this.request<T>(this.getOptionsConfig('patch', url, data));
+    return await this.request<T>(this.getOptionsConfig('patch' as const, url, data));
   };
 
   delete = async <T = any>(url: string, data?: any): Promise<T> => {
-    return await this.request<T>(this.getOptionsConfig('delete', url, data));
+    return await this.request<T>(this.getOptionsConfig('delete' as const, url, data));
   };
 
-  downloadFile = async (url: string): Promise<Blob> => {
+  downloadFile = async (url: string): Promise<{success: true, url: string}> => {
     const response = await this._axios.get(url, {
       responseType: 'blob',
       headers: {
-        'Accept': 'application/pdf',
+        'Accept': 'application/pdf, application/vnd.openxmlformats-officedocument.wordprocessingml.document, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       },
     });
-    return response.data;
+    
+    const blob = new Blob([response.data], { 
+      type: response.headers['content-type'] || 'application/octet-stream' 
+    });
+    const blobUrl = URL.createObjectURL(blob);
+    
+    return { success: true, url: blobUrl };
   };
 
   private getOptionsConfig = (
     method: RequestMethod,
     url: string,
-    data?: any
+    data?: any,
+    config?: AxiosRequestConfig  // Nouveau paramètre
   ): RequestOptions => {
-    return {
+    const headers: Record<string, string> = {
+      Accept: 'application/json',
+    };
+
+    // Ne pas forcer Content-Type si FormData (Axios le gère automatiquement)
+    if (data instanceof FormData) {
+      // Laisse Axios définir le Content-Type avec boundary
+      // Ne touche pas à 'Content-Type'
+    } else {
+      headers['Content-Type'] = 'application/json';
+    }
+
+    const result: RequestOptions = {
       method,
       url,
       data,
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
+      headers,
     };
+    
+    if (config) {
+      Object.assign(result, config);
+    }
+    
+    return result;
   };
 
-  private request<T = any>(options: RequestOptions): Promise<T> {
-    return new Promise((resolve, reject) => {
+private request<T = any>(options: RequestOptions): Promise<T> {
+  return new Promise((resolve, reject) => {
+    if (options.data instanceof FormData) {
+      // Supprime tout Content-Type pour laisser Axios gérer multipart
+      delete options.headers?.['Content-Type'];
+      delete options.headers?.['content-type'];
+
       this._axios
-        .request<ApiResponse<T>>(options)
+        .post(options.url, options.data, {
+          headers: options.headers,
+          timeout: options.timeout,
+        })
         .then((res: AxiosResponse<ApiResponse<T>>) => resolve(res.data as T))
         .catch((ex: any) => {
           const error: ApiError = ex.response?.data || {
@@ -111,8 +141,23 @@ export class HttpService {
           };
           reject(error);
         });
-    });
-  }
+    } else {
+      this._axios
+        .request<ApiResponse<T>>({
+          ...options,
+          method: options.method as any
+        })
+        .then((res: AxiosResponse<ApiResponse<T>>) => resolve(res.data as T))
+        .catch((ex: any) => {
+          const error: ApiError = ex.response?.data || {
+            message: ex.message || 'Une erreur est survenue',
+            status: ex.response?.status,
+          };
+          reject(error);
+        });
+    }
+  });
+}
 }
 
 export default new HttpService();

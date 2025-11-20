@@ -2,6 +2,8 @@
  * Utilitaires de validation
  */
 
+import { IFU_REGEX, RIB_REGEX, MIN_LENGTH, MAX_LENGTH } from '../constants/validation.constants'
+
 // Regex de validation
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const PHONE_REGEX = /^[\d\s+()-]+$/
@@ -48,6 +50,23 @@ export const validateMatricule = (matricule: string): boolean => {
 }
 
 /**
+ * Valider un numéro IFU (13 chiffres)
+ */
+export const validateIFU = (ifu: string): boolean => {
+  if (!ifu) return false
+  return IFU_REGEX.test(ifu.trim())
+}
+
+/**
+ * Valider un RIB (22 à 27 caractères)
+ */
+export const validateRIB = (rib: string): boolean => {
+  if (!rib) return false
+  const cleaned = rib.trim().toUpperCase()
+  return RIB_REGEX.test(cleaned)
+}
+
+/**
  * Valider qu'une chaîne n'est pas vide
  */
 export const validateRequired = (value: string): boolean => {
@@ -84,7 +103,7 @@ export const validateNumberRange = (
  */
 export const getValidationError = (
   field: string,
-  type: 'required' | 'email' | 'phone' | 'date' | 'minLength' | 'maxLength',
+  type: 'required' | 'email' | 'phone' | 'date' | 'minLength' | 'maxLength' | 'ifu' | 'rib',
   options?: { minLength?: number; maxLength?: number }
 ): string => {
   const errors: Record<string, string> = {
@@ -94,6 +113,8 @@ export const getValidationError = (
     date: `Veuillez entrer une date valide.`,
     minLength: `Le champ ${field} doit contenir au moins ${options?.minLength} caractères.`,
     maxLength: `Le champ ${field} ne doit pas dépasser ${options?.maxLength} caractères.`,
+    ifu: `Le numéro IFU doit contenir exactement 13 chiffres.`,
+    rib: `Le RIB doit contenir entre 22 et 27 caractères.`,
   }
 
   return errors[type] || `Le champ ${field} est invalide.`
@@ -106,7 +127,7 @@ export interface ValidationRule {
   field: string
   value: any
   rules: Array<{
-    type: 'required' | 'email' | 'phone' | 'date' | 'minLength' | 'maxLength'
+    type: 'required' | 'email' | 'phone' | 'date' | 'minLength' | 'maxLength' | 'ifu' | 'rib'
     options?: { minLength?: number; maxLength?: number }
   }>
 }
@@ -138,6 +159,12 @@ export const validateForm = (
           break
         case 'maxLength':
           isValid = validateMaxLength(value, rule.options?.maxLength || 1000)
+          break
+        case 'ifu':
+          isValid = validateIFU(value)
+          break
+        case 'rib':
+          isValid = validateRIB(value)
           break
       }
 

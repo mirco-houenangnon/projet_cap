@@ -57,11 +57,30 @@ export interface UpdateCourseElementRequest {
 // ==================== PROFESSORS ====================
 export interface Professor {
   id: number;
-  name: string;
+  first_name: string;
+  last_name: string;
+  full_name: string;
   email?: string;
   phone?: string;
-  grade?: string;
+  password?: string;
+  role_id?: number;
+  rib_number?: string;
+  rib?: string;
+  rib_url?: string;
+  ifu_number?: string;
+  ifu?: string;
+  ifu_url?: string;
+  bank?: string;
   speciality?: string;
+  specialty?: string;
+  status?: 'active' | 'inactive' | 'on_leave';
+  grade_id?: number;
+  grade?: {
+    id: number;
+    name: string;
+    abbreviation: string;
+  };
+  bio?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -70,10 +89,32 @@ export interface CourseElementProfessor {
   id: number;
   course_element_id: number;
   professor_id: number;
+  principal_professor_id: number;
+  academic_year_id: number;
+  class_group_id: number;
+  is_primary: boolean;
   course_element?: CourseElement;
   professor?: Professor;
+  principal_professor?: Professor;
+  academic_year?: { id: number; name: string };
+  class_group?: ClassGroup;
   created_at: string;
   updated_at: string;
+}
+
+export interface CreateCourseElementProfessorRequest {
+  course_element_id: number;
+  professor_id: number;
+  principal_professor_id: number;
+  academic_year_id: number;
+  class_group_id: number;
+  is_primary?: boolean;
+}
+
+export interface UpdateCourseElementProfessorRequest {
+  course_element_id?: number;
+  professor_id?: number;
+  is_primary?: boolean;
 }
 
 export interface AttachProfessorRequest {
@@ -100,17 +141,22 @@ export interface CourseResource {
 
 export interface FileInfo {
   id: number;
-  file_name: string;
-  file_size: number;
-  file_path: string;
+  name: string;
+  original_name: string;
+  file_name?: string;
+  file_size?: number;
+  size: number;
+  file_path?: string;
   mime_type: string;
+  url: string;
+  download_url: string;
   created_at: string;
 }
 
 export interface CreateCourseResourceRequest {
   title: string;
   description?: string;
-  resource_type: 'syllabus' | 'cours' | 'td' | 'tp' | 'examen';
+  pedagogical_type: 'syllabus' | 'cours' | 'td' | 'tp' | 'examen'
   is_public?: boolean;
   course_element_id: number;
   file: File;
@@ -138,9 +184,15 @@ export interface Program {
   id: number;
   class_group_id: number;
   course_element_professor_id: number;
+  academic_year_id: number;
   weighting: { [key: string]: number }; // ex: { "CC": 30, "TP": 20, "EXAMEN": 50 }
+  retake_weighting?: { [key: string]: number } | null;
   class_group?: ClassGroup;
+  academic_year?: { id: number; name: string };
   course_element_professor?: CourseElementProfessor;
+  // Relations exposées par le ProgramResource côté backend
+  course_element?: CourseElement;
+  professor?: Professor;
   created_at: string;
   updated_at: string;
 }
@@ -148,7 +200,9 @@ export interface Program {
 export interface CreateProgramRequest {
   class_group_id: number;
   course_element_professor_id: number;
+  academic_year_id: number;
   weighting: { [key: string]: number };
+  retake_weighting?: { [key: string]: number };
 }
 
 export interface UpdateProgramRequest {
@@ -190,23 +244,6 @@ export interface CopyProgramsResponse {
   };
 }
 
-// ==================== API RESPONSES ====================
-export interface PaginatedResponse<T> {
-  data: T[];
-  current_page: number;
-  last_page: number;
-  per_page: number;
-  total: number;
-  from: number;
-  to: number;
-}
-
-export interface ApiResponse<T> {
-  success: boolean;
-  message: string;
-  data: T;
-}
-
 // ==================== FILTERS & SEARCH ====================
 export interface TeachingUnitFilters {
   search?: string;
@@ -225,6 +262,7 @@ export interface CourseElementFilters {
 }
 
 export interface CourseResourceFilters {
+  search?: string;
   course_element_id?: number;
   resource_type?: string;
   is_public?: boolean;
@@ -237,6 +275,12 @@ export interface ProgramFilters {
   class_group_id?: number;
   course_element_id?: number;
   professor_id?: number;
+  academic_year_id?: number;
   search?: string;
   per_page?: number;
+}
+
+export interface RenewRequest {
+  current_academic_year_id: number;
+  next_academic_year_id: number;
 }

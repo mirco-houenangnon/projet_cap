@@ -43,7 +43,9 @@ import {
   cilFile,
 } from '@coreui/icons'
 import { useCourseResources } from '@/hooks/cours'
-import type { CourseResource, CourseElement } from '@/types/cours.types'
+import SearchableSelect from '@/components/forms/SearchableSelect'
+import { openFileInNewTab } from '@/utils/fileViewer'
+import type { CourseResource, UpdateCourseResourceRequest } from '@/types/cours.types'
 
 const CourseResources: React.FC = () => {
   // Hook personnalisé pour gérer les données et les actions
@@ -59,20 +61,26 @@ const CourseResources: React.FC = () => {
     updateFilters,
     resetFilters,
     setError,
-    getResourceTypeColor,
-    formatFileSize
+    getResourceTypeColor
   } = useCourseResources()
 
   // États locaux pour l'interface utilisateur
   const [showModal, setShowModal] = useState(false)
   const [editingResource, setEditingResource] = useState<CourseResource | null>(null)
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    title: string
+    description: string
+    pedagogical_type: 'syllabus' | 'cours' | 'td' | 'tp' | 'examen' | ''
+    is_public: boolean
+    course_element_id: string
+    file: File | null
+  }>({
     title: '',
     description: '',
-    resource_type: '',
+    pedagogical_type: '',
     is_public: false,
     course_element_id: '',
-    file: null as File | null,
+    file: null,
   })
   const [searchTerm, setSearchTerm] = useState('')
   const [resourceTypeFilter, setResourceTypeFilter] = useState('')
@@ -85,7 +93,7 @@ const CourseResources: React.FC = () => {
       setFormData({
         title: resource.title,
         description: resource.description || '',
-        resource_type: resource.resource_type,
+        pedagogical_type: resource.resource_type,
         is_public: resource.is_public,
         course_element_id: resource.course_element_id.toString(),
         file: null,
@@ -95,7 +103,7 @@ const CourseResources: React.FC = () => {
       setFormData({
         title: '',
         description: '',
-        resource_type: '',
+        pedagogical_type: '',
         is_public: false,
         course_element_id: '',
         file: null,
@@ -110,7 +118,7 @@ const CourseResources: React.FC = () => {
     setFormData({
       title: '',
       description: '',
-      resource_type: '',
+      pedagogical_type: '',
       is_public: false,
       course_element_id: '',
       file: null,
@@ -121,17 +129,37 @@ const CourseResources: React.FC = () => {
     e.preventDefault()
     
     try {
+      if (!formData.file) {
+  setAlert({ type: 'danger', message: 'Veuillez sélectionner un fichier.' })
+  return
+}
+
+// Vérifie que c'est bien un File
+if (!(formData.file instanceof File)) {
+  console.error('Fichier invalide:', formData.file)
+  setAlert({ type: 'danger', message: 'Le fichier sélectionné est invalide.' })
+  return
+}
+
+
       const data = {
         ...formData,
         course_element_id: parseInt(formData.course_element_id),
-        resource_type: formData.resource_type as 'syllabus' | 'cours' | 'td' | 'tp' | 'examen',
-        file: formData.file!,
+        pedagogical_type: formData.pedagogical_type as 'syllabus' | 'cours' | 'td' | 'tp' | 'examen',
+        file: formData.file,
       }
       
       if (editingResource) {
         // Update existing resource (sans fichier pour l'instant)
-        const updateData = { ...formData }
-        delete (updateData as any).file
+        const updateData: UpdateCourseResourceRequest = {
+          title: formData.title,
+          description: formData.description,
+          is_public: formData.is_public,
+          ...(formData.pedagogical_type
+            ? { resource_type: formData.pedagogical_type as UpdateCourseResourceRequest['resource_type'] }
+            : {}),
+        }
+
         await updateCourseResource(editingResource.id, updateData)
         setAlert({ type: 'success', message: 'Ressource mise à jour avec succès!' })
       } else {
@@ -316,14 +344,11 @@ const CourseResources: React.FC = () => {
                           </CBadge>
                         </CTableDataCell>
                         <CTableDataCell>
-                          {resource.file_name && (
-                            <div>
+                          {resource.file && (
+                            <CButton color="link" size="sm" onClick={() => openFileInNewTab(resource.file!.url)}>
                               <CIcon icon={cilFile} className="me-1" />
-                              <span className="small">{resource.file_name}</span>
-                              <div className="text-muted small">
-                                {resource.file_size && formatFileSize(resource.file_size)}
-                              </div>
-                            </div>
+                              {resource.file.original_name}
+                            </CButton>
                           )}
                         </CTableDataCell>
                         <CTableDataCell>
@@ -340,10 +365,12 @@ const CourseResources: React.FC = () => {
                               <CIcon icon={cilOptions} />
                             </CDropdownToggle>
                             <CDropdownMenu>
-                              <CDropdownItem>
-                                <CIcon icon={cilCloudDownload} className="me-2" />
-                                Télécharger
-                              </CDropdownItem>
+                              {resource.file && (
+                                <CDropdownItem onClick={() => openFileInNewTab(resource.file!.download_url)}>
+                                  <CIcon icon={cilCloudDownload} className="me-2" />
+                                  Télécharger
+                                </CDropdownItem>
+                              )}
                               <CDropdownItem
                                 onClick={() => handleShowModal(resource)}
                               >
@@ -381,30 +408,28 @@ const CourseResources: React.FC = () => {
           <CModalBody>
             <CRow>
               <CCol md={6}>
-                <div className="mb-3">
-                  <CFormLabel htmlFor="course_element_id">Cours (ECUE) *</CFormLabel>
-                  <CFormSelect
-                    id="course_element_id"
-                    value={formData.course_element_id}
-                    onChange={(e) => setFormData({ ...formData, course_element_id: e.target.value })}
-                    required
-                  >
-                    <option value="">Sélectionner un cours</option>
-                    {courseElements.map((element) => (
-                      <option key={element.id} value={element.id}>
-                        {element.code} - {element.name}
-                      </option>
-                    ))}
-                  </CFormSelect>
-                </div>
+                <SearchableSelect
+                  id="course_element_id"
+                  label="Cours (ECUE)"
+                  value={formData.course_element_id}
+                  onChange={(value) => setFormData({ ...formData, course_element_id: value.toString() })}
+                  options={courseElements.map(el => ({ value: el.id, label: `${el.code} - ${el.name}` }))}
+                  placeholder="Sélectionner un cours"
+                  required
+                />
               </CCol>
               <CCol md={6}>
                 <div className="mb-3">
                   <CFormLabel htmlFor="resource_type">Type de ressource *</CFormLabel>
                   <CFormSelect
                     id="resource_type"
-                    value={formData.resource_type}
-                    onChange={(e) => setFormData({ ...formData, resource_type: e.target.value })}
+                    value={formData.pedagogical_type}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        pedagogical_type: (e.target.value || '') as 'syllabus' | 'cours' | 'td' | 'tp' | 'examen' | '',
+                      })
+                    }
                     required
                   >
                     <option value="">Sélectionner un type</option>
@@ -445,7 +470,11 @@ const CourseResources: React.FC = () => {
               <CFormInput
                 type="file"
                 id="file"
-                onChange={(e) => setFormData({ ...formData, file: e.target.files?.[0] || null })}
+                onChange={(e) => {
+                  const input = e.target as HTMLInputElement
+                  const file = input.files?.[0] || null
+                  setFormData({ ...formData, file })
+                }}
                 required={!editingResource}
                 accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.zip,.rar"
               />

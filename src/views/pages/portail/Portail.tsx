@@ -9,87 +9,95 @@ import {
   CContainer,
   CButton,
 } from '@coreui/react';
-import { Link } from 'react-router-dom'; // Import de Link pour la navigation interne
+import { Link } from 'react-router-dom'; 
 
 const applications = [
   {
-    title: 'CAP Inscription',
-    description:
-      'Facilite le processus d\'inscription des étudiants au CAP avec une gestion en ligne complète.',
-    image: '/assets/svg/inscription.svg',
-    url: '/inscription',
-  },
-  {
     title: 'CAP Attestations',
     description:
-      'Permet de délivrer rapidement les attestations de fin de formation.',
-    image: '/assets/svg/attestation.svg',
+      '',
+    image: '/images/attestation.png',
     url: '/attestations',
+  },
+    {
+    title: 'CAP Bibliothèque',
+    description: '',
+    image: '/images/bibliotheque.png',
+    url: '/bibliotheque',
+  },
+    {
+    title: 'CAP Cahier de Texte',
+    description: '',
+    image: '/images/cahier-texte.png',
+    url: '/cahier-texte',
+  },
+    {
+    title: 'CAP Cours',
+    description: '',
+    image: '/images/cours.png',
+    url: '/cours',
+  },
+    {
+    title: 'CAP Emploi du Temps',
+    description: '',
+    image: '/images/emploi-temps.png',
+    url: '/emploi-du-temps',
+  },
+    {
+    title: 'CAP Finance',
+    description: '',
+    image: '/images/finance.png',
+    url: '/finance',
+  },
+  {
+    title: 'CAP Inscription',
+    description:
+      '',
+    image: '/images/inscription.png',
+    url: '/inscription',
   },
   {
     title: 'CAP Notes',
     description:
-      'Gestion des notes avec un suivi simple et intuitif des performances académiques.',
-    image: '/assets/svg/notes.svg',
+      '',
+    image: '/images/notes.png',
     url: '/notes',
   },
   {
     title: 'CAP Ressources Humaines',
     description:
-      'Gestion du personnel, contrats, congés et évaluations de performance.',
-    image: '/assets/svg/rh.svg',
+      '',
+    image: '/images/rh.png',
     url: '/rh',
   },
   {
     title: 'CAP Soutenances',
-    description: 'Organisation et gestion des soutenances de mémoire.',
-    image: '/assets/svg/soutenance.svg',
+    description: '',
+    image: '/images/soutenances.png',
     url: '/soutenances',
   },
-  {
-    title: 'CAP Emploi du Temps',
-    description: 'Création et gestion des horaires de cours et d\'examens.',
-    image: '/assets/svg/emploi.svg',
-    url: '/emploi-du-temps',
-  },
-  {
-    title: 'CAP Cahier de Texte',
-    description: 'Suivi et planification des cours dispensés par les enseignants.',
-    image: '/assets/svg/cahier.svg',
-    url: '/cahier-texte',
-  },
+
   {
     title: 'CAP Présence',
     description:
-      'Suivi de la présence des étudiants et gestion des entrées/sorties.',
-    image: '/assets/svg/presence.svg',
+      '',
+    image: '/images/presence.png',
     url: '/presence',
   },
-  {
-    title: 'CAP Finance',
-    description: 'Gestion des finances et des paiements des étudiants.',
-    image: '/assets/svg/finances.svg',
-    url: '/finance',
-  },
-  {
-    title: 'CAP Bibliothèque',
-    description: 'Gestion des ressources et prêts de la bibliothèque.',
-    image: '/assets/svg/bibliotheque.svg',
-    url: '/bibliotheque',
-  },
+
 ];
 
 const Portail = () => {
   return (
     <div className="bg-body-tertiary min-vh-100 d-flex flex-row align-items-center">
       <CContainer>
-        <h2 className="text-center mb-4">Les 10 Modules du Progiciel</h2>
+        <h2 className="text-left my-5">Modules du Progiciel</h2> <hr/>
         <CRow>
           {applications.map((app, index) => (
             <CCol md={3} sm={6} className="mb-4" key={index}>
               <Link to={app.url} style={{ textDecoration: 'none' }}>
-                <CCard className="h-100 shadow-sm hover-shadow" style={{ position: 'relative' }}>
-                  <CCardImage orientation="top" src={app.image} height={220} className="p-3" />
+                <CCard className="h-200 shadow-sm hover-shadow" style={{ position: 'relative' }}>
+                  <CCardImage orientation="top" src={app.image} height={300} className="p-3" />
                   <CCardBody style={{ paddingBottom: '4rem' }}>
                     <CCardTitle>{app.title}</CCardTitle>
                     <CCardText>{app.description}</CCardText>

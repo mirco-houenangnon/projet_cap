@@ -68,7 +68,7 @@ const Login = () => {
 
     try {
       const response = await AuthService.login(credentials)
-      const { access_token, user } = response
+      const { access_token, user } = response.data!
       login(
         access_token,
         user.last_name || user.name || '',

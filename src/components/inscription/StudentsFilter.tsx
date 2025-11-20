@@ -12,7 +12,7 @@ interface StudentsFilterProps {
     years?: any[]
     filieres?: any[]
     entryDiplomas?: any[]
-    niveaux?: any
+    niveaux?: Array<{ value: string; label: string }>
     statuts?: any[]
   }
   selectedYear: string
@@ -60,11 +60,9 @@ const StudentsFilter: React.FC<StudentsFilterProps> = ({
   // Helper pour convertir les années académiques (objets) en options Select
   const mapYearsToOptions = (years: any[]): SelectOption[] => {
     return years.map((y) => {
-      // Si c'est un objet AcademicYear avec {id, libelle, date_debut, date_fin}
-      if (typeof y === 'object' && y.libelle) {
-        return { value: y.libelle, label: y.libelle }
+      if (typeof y === 'object' && y.id) {
+        return { value: String(y.id), label: y.libelle || y.academic_year || String(y.id) }
       }
-      // Si c'est déjà une chaîne
       return { value: String(y), label: String(y) }
     })
   }
@@ -72,14 +70,8 @@ const StudentsFilter: React.FC<StudentsFilterProps> = ({
   // Helper pour convertir les filières en options Select
   const mapFilieresToOptions = (filieres: any[]): SelectOption[] => {
     return filieres.map((f) => {
-      if (typeof f === 'object' && f.title) {
-        return { value: f.title, label: f.title }
-      }
-      if (typeof f === 'object' && f.libelle) {
-        return { value: f.libelle, label: f.libelle }
-      }
-      if (typeof f === 'object' && f.name) {
-        return { value: f.name, label: f.name }
+      if (typeof f === 'object' && f.id) {
+        return { value: String(f.id), label: f.title || f.name || f.libelle || String(f.id) }
       }
       return { value: String(f), label: String(f) }
     })
@@ -88,11 +80,8 @@ const StudentsFilter: React.FC<StudentsFilterProps> = ({
   // Helper pour convertir les diplômes d'entrée en options Select
   const mapDiplomasToOptions = (diplomas: any[]): SelectOption[] => {
     return diplomas.map((d) => {
-      if (typeof d === 'object' && d.name) {
-        return { value: d.name, label: d.name }
-      }
-      if (typeof d === 'object' && d.libelle) {
-        return { value: d.libelle, label: d.libelle }
+      if (typeof d === 'object' && d.id) {
+        return { value: String(d.id), label: d.name || d.libelle || String(d.id) }
       }
       return { value: String(d), label: String(d) }
     })
@@ -100,35 +89,14 @@ const StudentsFilter: React.FC<StudentsFilterProps> = ({
 
   // Helper pour convertir les niveaux en options Select
   const mapNiveauxToOptions = (niveaux: any[]): SelectOption[] => {
-    if (!niveaux) return []
+    if (!niveaux || !Array.isArray(niveaux)) return []
     
     return niveaux.map((n) => {
-      // Si c'est déjà une string (L1, L2, etc.)
-      if (typeof n === 'string') {
-        return { value: n, label: n }
+      // Le backend renvoie déjà {value: "1", label: "Niveau 1"}
+      if (typeof n === 'object' && n !== null && n.value && n.label) {
+        return { value: String(n.value), label: String(n.label) }
       }
-      
-      // Si c'est un objet avec value/label du backend
-      if (typeof n === 'object' && n !== null) {
-        // Le backend renvoie {value: "L1", label: "Licence 1"}
-        if (n.value && n.label) {
-          return { value: String(n.value), label: String(n.label) }
-        }
-        
-        // Fallback pour autres structures
-        const code = n.code || n.id || n.value
-        const displayName = n.name || n.libelle || n.nom || n.label || n.title || code
-        
-        if (code && displayName) {
-          return { value: String(code), label: String(displayName) }
-        }
-        
-        if (displayName) {
-          return { value: String(displayName), label: String(displayName) }
-        }
-      }
-      
-      // Fallback
+      // Fallback pour strings
       return { value: String(n), label: String(n) }
     })
   }
@@ -160,13 +128,10 @@ const StudentsFilter: React.FC<StudentsFilterProps> = ({
           : { value: String(s), label: String(s) }
       ),
     ],
-    niveau:
-      selectedFiliere === 'all' || !selectedFiliere
-        ? [{ value: 'all', label: 'Tous les niveaux' }]
-        : [
-            { value: 'all', label: 'Tous les niveaux' },
-            ...mapNiveauxToOptions(filterOptions.niveaux?.[selectedFiliere] || []),
-          ],
+    niveau: [
+      { value: 'all', label: 'Tous les niveaux' },
+      ...mapNiveauxToOptions(Array.isArray(filterOptions.niveaux) ? filterOptions.niveaux : []),
+    ],
   }
 
   return (

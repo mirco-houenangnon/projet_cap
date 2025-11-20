@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import InscriptionService from '../../services/inscription.service.ts';
+import InscriptionService from '../../services/inscription.service';
 import type { AcademicYear, PendingStudentData, PendingStudentsFilterOptions } from '../../types/inscription.types';
 
 // Types pour les retours de fonctions
@@ -19,8 +19,8 @@ const usePendingStudentsData = () => {
   const [academicYears, setAcademicYears] = useState<AcademicYear[]>([]);
   const [pendingStudents, setPendingStudents] = useState<PendingStudentData[]>([]);
   const [graphesData] = useState({ inscritsParFiliere: [], admis: 0, rejetes: 0 });
-  const [filterOptions, setFilterOptions] = useState<PendingStudentsFilterOptions>({ filieres: [], years: [], entryDiplomas: [], statuts: [], niveaux: {} });
-  const [selectedYear, setSelectedYear] = useState('2024-2025');
+  const [filterOptions, setFilterOptions] = useState<PendingStudentsFilterOptions>({ filieres: [], years: [], entryDiplomas: [], statuts: [], niveaux: [] });
+  const [selectedYear, setSelectedYear] = useState<string>('all');
   const [selectedFiliere, setSelectedFiliere] = useState('all');
   const [selectedEntryDiploma, setSelectedEntryDiploma] = useState('all');
   const [selectedStatut, setSelectedStatut] = useState('all');
@@ -38,18 +38,45 @@ const usePendingStudentsData = () => {
       try {
         const yearsData = await InscriptionService.academicYears();
         setAcademicYears(yearsData || []);
+        
+        // Set current year as default
+        if (yearsData && yearsData.length > 0 && selectedYear === 'all') {
+          const currentYear = yearsData.find((y: any) => y.is_current);
+          if (currentYear) {
+            setSelectedYear(String(currentYear.id));
+            return; // Exit early, will re-run with new selectedYear
+          }
+        }
 
         const filterData = await InscriptionService.filterOptions();
-        setFilterOptions(filterData || { filieres: [], years: [], entryDiplomas: [], statuts: [], niveaux: {} });
+        setFilterOptions(filterData || { filieres: [], years: [], entryDiplomas: [], statuts: [], niveaux: [] });
 
-        const studentsData = await InscriptionService.pendingStudents({
-          status: selectedStatut !== 'all' ? selectedStatut : undefined,
-          department_id: selectedFiliere !== 'all' ? Number(selectedFiliere) : undefined,
-          academic_year_id: selectedYear !== 'all' ? Number(selectedYear) : undefined,
-          entry_diploma_id: selectedEntryDiploma !== 'all' ? Number(selectedEntryDiploma) : undefined,
-          search: searchQuery || undefined,
-          page: currentPage
-        });
+        const params: any = { page: currentPage };
+        
+        if (selectedYear !== 'all' && selectedYear) {
+          const yearId = Number(selectedYear);
+          if (!isNaN(yearId)) params.academic_year_id = yearId;
+        }
+        
+        if (selectedFiliere !== 'all' && selectedFiliere) {
+          const deptId = Number(selectedFiliere);
+          if (!isNaN(deptId)) params.department_id = deptId;
+        }
+        
+        if (selectedEntryDiploma !== 'all' && selectedEntryDiploma) {
+          const diplomaId = Number(selectedEntryDiploma);
+          if (!isNaN(diplomaId)) params.entry_diploma_id = diplomaId;
+        }
+        
+        if (selectedStatut !== 'all' && selectedStatut) {
+          params.status = selectedStatut;
+        }
+        
+        if (searchQuery) {
+          params.search = searchQuery;
+        }
+        
+        const studentsData = await InscriptionService.pendingStudents(params);
         setPendingStudents(studentsData.data || []);
         setTotalStudents(studentsData.meta?.total || 0);
         setTotalPages(studentsData.meta?.last_page || 1);
@@ -92,6 +119,11 @@ const usePendingStudentsData = () => {
           prev.map(student => {
             const studentData = studentsData.find((data: any) => data.studentId === student.id);
             if (studentData) {
+              // Déterminer le nouveau statut
+              const isFavorable = 
+                (studentData.opinionCuca && studentData.opinionCuca.toLowerCase() === 'favorable') ||
+                (studentData.opinionCuo && studentData.opinionCuo.toLowerCase() === 'favorable');
+              
               return {
                 ...student,
                 mailCucaEnvoye: studentData.opinionCuca ? 'Oui' : student.mailCucaEnvoye,
@@ -102,6 +134,7 @@ const usePendingStudentsData = () => {
                 commentaireCuca: studentData.commentaireCuca || student.commentaireCuca,
                 opinionCuo: studentData.opinionCuo || student.opinionCuo,
                 commentaireCuo: studentData.commentaireCuo || student.commentaireCuo,
+                status: isFavorable ? 'approved' : student.status,
               };
             }
             return student;
@@ -122,7 +155,7 @@ const usePendingStudentsData = () => {
   // Fonction pour exporter les données
   const exportData = async (format: any): Promise<FunctionResult> => {
     try {
-      const endpoint = `/export/${format}?year=${selectedYear}&filiere=${selectedFiliere}`;
+      const endpoint = `/inscription/export/${format}?year=${selectedYear}&filiere=${selectedFiliere}`;
       const response = await InscriptionService.exportData(endpoint);
       if (response.success) {
         return { success: true, url: response.url };

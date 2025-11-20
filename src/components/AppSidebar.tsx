@@ -2,6 +2,7 @@ import React from 'react'
 import { useSelector, useDispatch } from 'react-redux'
 import { useLocation, Link } from 'react-router-dom'
 import { getAssetUrl } from '@/utils/assets'
+import { useAuth } from '@/contexts'
 
 import {
   CCloseButton,
@@ -20,7 +21,7 @@ import {
   emploiNavigation,
   inscriptionNavigation,
   attestationNavigation,
-  noteNavigation,
+  getNoteNavigation,
   rhNavigation,
   soutenanceNavigation,
   coursNavigation,
@@ -33,6 +34,7 @@ import {
 const AppSidebar = () => {
   const dispatch = useDispatch()
   const location = useLocation()
+  const { role } = useAuth()
   const unfoldable = useSelector((state: any) => state.sidebarUnfoldable)
   const sidebarShow = useSelector((state: any) => state.sidebarShow)
 
@@ -41,7 +43,7 @@ const AppSidebar = () => {
 
     if (path.startsWith('/inscription')) return inscriptionNavigation
     if (path.startsWith('/attestations')) return attestationNavigation
-    if (path.startsWith('/notes')) return noteNavigation
+    if (path.startsWith('/notes')) return getNoteNavigation(role)
     if (path.startsWith('/rh')) return rhNavigation
     if (path.startsWith('/soutenance')) return soutenanceNavigation
     if (path.startsWith('/emploi')) return emploiNavigation

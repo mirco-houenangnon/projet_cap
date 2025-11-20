@@ -1,0 +1,6 @@
+export { default as ProfessorDashboard } from './ProfessorDashboard'
+export { default as GradeSheet } from './GradeSheet'
+export { default as AdminDashboard } from './AdminDashboard'
+export { default as AdminConsultation } from './AdminConsultation'
+export { default as DecisionSemester } from './DecisionSemester'
+export { default as DecisionYear } from './DecisionYear'

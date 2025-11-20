@@ -20,7 +20,6 @@ import {
   CForm,
   CFormInput,
   CFormLabel,
-  CFormSelect,
   CAlert,
   CBadge,
   CDropdown,
@@ -28,6 +27,7 @@ import {
   CDropdownMenu,
   CDropdownItem,
 } from '@coreui/react'
+import SearchableSelect from '@/components/forms/SearchableSelect'
 import CIcon from '@coreui/icons-react'
 import {
   cilPlus,
@@ -40,7 +40,7 @@ import {
   cilUser,
 } from '@coreui/icons'
 import { useCourseElements } from '@/hooks/cours'
-import type { CourseElement, TeachingUnit } from '@/types/cours.types'
+import type { CourseElement } from '@/types/cours.types'
 
 const CourseElements: React.FC = () => {
   // Hook personnalisé pour gérer les données et les actions
@@ -263,12 +263,12 @@ const CourseElements: React.FC = () => {
                         <CTableDataCell>
                           <CBadge color="secondary">
                             <CIcon icon={cilUser} className="me-1" size="sm" />
-                            {element.professors_count || 0}
+                            {element.professors?.length || 0}
                           </CBadge>
                         </CTableDataCell>
                         <CTableDataCell>
                           <CBadge color="warning">
-                            {element.resources_count || 0}
+                            {element.resources?.length || 0}
                           </CBadge>
                         </CTableDataCell>
                         <CTableDataCell>
@@ -312,22 +312,15 @@ const CourseElements: React.FC = () => {
         </CModalHeader>
         <CForm onSubmit={handleSubmit}>
           <CModalBody>
-            <div className="mb-3">
-              <CFormLabel htmlFor="teaching_unit_id">Unité d'Enseignement *</CFormLabel>
-              <CFormSelect
-                id="teaching_unit_id"
-                value={formData.teaching_unit_id}
-                onChange={(e) => setFormData({ ...formData, teaching_unit_id: e.target.value })}
-                required
-              >
-                <option value="">Sélectionner une UE</option>
-                {teachingUnits.map((unit) => (
-                  <option key={unit.id} value={unit.id}>
-                    {unit.code} - {unit.name}
-                  </option>
-                ))}
-              </CFormSelect>
-            </div>
+            <SearchableSelect
+              id="teaching_unit_id"
+              label="Unité d'Enseignement"
+              value={formData.teaching_unit_id}
+              onChange={(value) => setFormData({ ...formData, teaching_unit_id: value.toString() })}
+              options={teachingUnits.map(u => ({ value: u.id, label: `${u.code} - ${u.name}` }))}
+              placeholder="Sélectionner une UE"
+              required
+            />
             <div className="mb-3">
               <CFormLabel htmlFor="name">Nom de l'ECUE *</CFormLabel>
               <CFormInput

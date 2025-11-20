@@ -5,17 +5,19 @@ import type {
   CourseElement,
   Professor,
   ClassGroup,
+  CourseElementProfessor,
   CreateProgramRequest,
   UpdateProgramRequest,
   ProgramFilters,
-  PaginatedResponse
 } from '@/types/cours.types'
+import type { ApiResponse } from '@/types'
 
 export const usePrograms = (initialFilters: ProgramFilters = {}) => {
   const [programs, setPrograms] = useState<Program[]>([])
   const [courseElements, setCourseElements] = useState<CourseElement[]>([])
   const [professors, setProfessors] = useState<Professor[]>([])
   const [classGroups, setClassGroups] = useState<ClassGroup[]>([])
+  const [courseElementProfessors, setCourseElementProfessors] = useState<CourseElementProfessor[]>([])
   const [pagination, setPagination] = useState({
     current_page: 1,
     last_page: 1,
@@ -32,16 +34,17 @@ export const usePrograms = (initialFilters: ProgramFilters = {}) => {
     try {
       setLoading(true)
       setError(null)
-      const response: PaginatedResponse<Program> = await CoursService.getPrograms(filters)
+      const response: ApiResponse<Program[]> = await CoursService.getPrograms(filters)
       
-      setPrograms(response.data)
+      setPrograms(response.data || [])
+      const meta = response.meta
       setPagination({
-        current_page: response.current_page,
-        last_page: response.last_page,
-        per_page: response.per_page,
-        total: response.total,
-        from: response.from,
-        to: response.to
+        current_page: meta?.current_page ?? 1,
+        last_page: meta?.last_page ?? 1,
+        per_page: meta?.per_page ?? (filters.per_page || 15),
+        total: meta?.total ?? 0,
+        from: meta?.from ?? 0,
+        to: meta?.to ?? 0,
       })
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Erreur lors du chargement des programmes')
@@ -53,15 +56,17 @@ export const usePrograms = (initialFilters: ProgramFilters = {}) => {
 
   const fetchReferenceData = useCallback(async () => {
     try {
-      const [courseElementsResponse, professorsResponse, classGroupsResponse] = await Promise.all([
+      const [courseElementsResponse, professorsResponse, classGroupsResponse, assignmentsResponse] = await Promise.all([
         CoursService.getCourseElements({ per_page: 100 }),
         CoursService.getProfessors(),
-        CoursService.getClassGroups()
+        CoursService.getClassGroups(),
+        CoursService.getCourseElementProfessorAssignments({ per_page: 100 })
       ])
       
-      setCourseElements(courseElementsResponse.data)
+      setCourseElements(courseElementsResponse.data || [])
       setProfessors(professorsResponse)
       setClassGroups(classGroupsResponse)
+      setCourseElementProfessors(assignmentsResponse.data || [])
     } catch (err: any) {
       console.error('Erreur fetchReferenceData:', err)
     }
@@ -110,7 +115,7 @@ export const usePrograms = (initialFilters: ProgramFilters = {}) => {
     setFilters(initialFilters)
   }, [initialFilters])
 
-  const goToPage = useCallback((page: number) => {
+  const goToPage = useCallback((_page: number) => {
     updateFilters({ per_page: filters.per_page || 15 })
   }, [filters.per_page, updateFilters])
 
@@ -143,6 +148,7 @@ export const usePrograms = (initialFilters: ProgramFilters = {}) => {
     courseElements,
     professors,
     classGroups,
+    courseElementProfessors,
     pagination,
     loading,
     error,

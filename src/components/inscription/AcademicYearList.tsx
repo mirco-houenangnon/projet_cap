@@ -16,7 +16,7 @@ interface AcademicYear {
   libelle: string
   date_debut: string
   date_fin: string
-  is_active: boolean
+  is_current: boolean
 }
 
 interface AcademicYearListProps {
@@ -72,7 +72,7 @@ const AcademicYearList: React.FC<AcademicYearListProps> = ({
               {year.date_fin}
             </CTableDataCell>
             <CTableDataCell className="text-center">
-              {year.is_active ? (
+              {year.is_current ? (
                 <CBadge color="success">Active</CBadge>
               ) : (
                 <CBadge color="secondary">Inactive</CBadge>

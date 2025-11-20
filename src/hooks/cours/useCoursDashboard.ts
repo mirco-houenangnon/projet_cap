@@ -44,11 +44,20 @@ export const useCoursDashboard = () => {
         CoursService.getClassGroups(),
       ])
 
+      console.log(
+        teachingUnitsResponse,
+        courseElementsResponse,
+        courseResourcesResponse,
+        programsResponse,
+        professorsResponse,
+        classGroupsResponse,
+      )
+
       setStats({
-        teachingUnitsCount: teachingUnitsResponse.total || 0,
-        courseElementsCount: courseElementsResponse.total || 0,
-        courseResourcesCount: courseResourcesResponse.total || 0,
-        programsCount: programsResponse.total || 0,
+        teachingUnitsCount: teachingUnitsResponse.meta?.total ?? 0,
+        courseElementsCount: courseElementsResponse.meta?.total ?? 0,
+        courseResourcesCount: courseResourcesResponse.meta?.total ?? 0,
+        programsCount: programsResponse.meta?.total ?? 0,
         professorsCount: professorsResponse.length || 0,
         classGroupsCount: classGroupsResponse.length || 0,
       })

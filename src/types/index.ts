@@ -8,6 +8,16 @@ export interface ApiResponse<T = any> {
   message?: string;
   status?: number;
   success?: boolean;
+  meta?: PaginationMeta;
+}
+
+export interface PaginationMeta {
+  total: number;
+  per_page: number;
+  current_page: number;
+  last_page: number;
+  from?: number | null;
+  to?: number | null;
 }
 
 export interface ApiError {

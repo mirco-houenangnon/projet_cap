@@ -5,7 +5,6 @@ import type {
   CreateTeachingUnitRequest,
   UpdateTeachingUnitRequest,
   TeachingUnitFilters,
-  PaginatedResponse
 } from '@/types/cours.types'
 
 export const useTeachingUnits = (initialFilters: TeachingUnitFilters = {}) => {
@@ -26,16 +25,21 @@ export const useTeachingUnits = (initialFilters: TeachingUnitFilters = {}) => {
     try {
       setLoading(true)
       setError(null)
-      const response: PaginatedResponse<TeachingUnit> = await CoursService.getTeachingUnits(filters)
       
-      setTeachingUnits(response.data)
+      // CORRECTION : Le service retourne ApiResponse<TeachingUnit[]>
+      const apiResponse = await CoursService.getTeachingUnits(filters)
+      console.log('Réponse API complète:', apiResponse)
+      
+      // CORRECTION : apiResponse contient directement data (les teaching units) et meta
+      setTeachingUnits(apiResponse.data || [])
+      const meta = apiResponse.meta
       setPagination({
-        current_page: response.current_page,
-        last_page: response.last_page,
-        per_page: response.per_page,
-        total: response.total,
-        from: response.from,
-        to: response.to
+        current_page: meta?.current_page ?? 1,
+        last_page: meta?.last_page ?? 1,
+        per_page: meta?.per_page ?? (filters.per_page || 15),
+        total: meta?.total ?? 0,
+        from: meta?.from ?? 0,
+        to: meta?.to ?? 0,
       })
     } catch (err: any) {
       setError(err?.response?.data?.message || 'Erreur lors du chargement des unités d\'enseignement')
@@ -88,7 +92,7 @@ export const useTeachingUnits = (initialFilters: TeachingUnitFilters = {}) => {
     setFilters(initialFilters)
   }, [initialFilters])
 
-  const goToPage = useCallback((page: number) => {
+  const goToPage = useCallback((_page: number) => {
     updateFilters({ per_page: filters.per_page || 15 })
     // Note: The pagination is typically handled by the backend via per_page parameter
   }, [filters.per_page, updateFilters])

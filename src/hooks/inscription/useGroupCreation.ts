@@ -183,35 +183,11 @@ const useGroupCreation = ({
   const saveGroups = useCallback(
     async (groupsToSave: Group[]) => {
       try {
-        const academicYear = filterOptions.years.find(
-          (y: any) =>
-            (typeof y === 'object' && y !== null && 'libelle' in y && y.libelle === selectedYear) || y === selectedYear
-        )
-        const department = filterOptions.filieres.find(
-          (f: any) =>
-            (typeof f === 'object' &&
-              f !== null &&
-              (('title' in f && f.title === selectedFiliere) ||
-                ('libelle' in f && f.libelle === selectedFiliere) ||
-                ('name' in f && f.name === selectedFiliere))) ||
-            f === selectedFiliere
-        )
+        // selectedYear et selectedFiliere sont déjà des IDs
+        const academicYearIdNum = parseInt(selectedYear, 10)
+        const departmentIdNum = parseInt(selectedFiliere, 10)
 
-        const academicYearId =
-          typeof academicYear === 'object' && academicYear !== null && 'id' in academicYear
-            ? academicYear.id
-            : academicYear
-        const departmentId =
-          typeof department === 'object' && department !== null && 'id' in department
-            ? department.id
-            : department
-
-        const academicYearIdNum =
-          typeof academicYearId === 'string' ? parseInt(academicYearId, 10) : Number(academicYearId)
-        const departmentIdNum =
-          typeof departmentId === 'string' ? parseInt(departmentId, 10) : Number(departmentId)
-
-        if (!academicYearIdNum || !departmentIdNum || isNaN(academicYearIdNum) || isNaN(departmentIdNum)) {
+        if (isNaN(academicYearIdNum) || isNaN(departmentIdNum)) {
           Swal.fire({
             icon: 'error',
             title: 'Erreur',
@@ -236,7 +212,7 @@ const useGroupCreation = ({
         const response = await InscriptionService.createClassGroups(data)
 
         if (response.success) {
-          Swal.fire({
+          await Swal.fire({
             icon: 'success',
             title: 'Groupes créés',
             text: `${groupsToSave.length} groupe(s) créé(s) avec succès !`,
@@ -248,6 +224,7 @@ const useGroupCreation = ({
               .join(''),
           })
           reset()
+          window.location.reload()
         } else {
           Swal.fire({
             icon: 'error',
