@@ -9,7 +9,8 @@ class NotesService {
     department_id?: number
     cohort?: string
   }) => {
-    return await HttpService.get(`${this.baseUrl}/professor/my-classes`, params)
+    const queryParams = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+    return await HttpService.get(`${this.baseUrl}/professor/my-classes${queryParams}`)
   }
 
   // Professeur - Obtenir les programmes d'une classe
@@ -71,7 +72,8 @@ class NotesService {
 
   // Admin - Dashboard
   getDashboard = async (academicYearId?: number) => {
-    return await HttpService.get(`${this.baseUrl}/admin/dashboard`, { academic_year_id: academicYearId })
+    const queryParams = academicYearId ? `?academic_year_id=${academicYearId}` : ''
+    return await HttpService.get(`${this.baseUrl}/admin/dashboard${queryParams}`)
   }
 
   // Admin - Obtenir les notes par filière et niveau
@@ -82,7 +84,8 @@ class NotesService {
     program_id?: number
     cohort?: string
   }) => {
-    return await HttpService.get(`${this.baseUrl}/admin/grades-by-department-level`, params)
+    const queryParams = params ? `?${new URLSearchParams(params as any).toString()}` : ''
+    return await HttpService.get(`${this.baseUrl}/admin/grades-by-department-level${queryParams}`)
   }
 
   // Admin - Détails d'un programme

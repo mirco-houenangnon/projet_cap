@@ -53,8 +53,8 @@ export class HttpService {
     return this._axios.interceptors.response.use(onFulfilled, onRejected);
   };
 
-  get = async <T = any>(url: string): Promise<T> => {
-    return await this.request<T>(this.getOptionsConfig('get' as const, url));
+  get = async <T = any>(url: string, config?: AxiosRequestConfig): Promise<T> => {
+    return await this.request<T>(this.getOptionsConfig('get' as const, url, undefined, config));
   };
 
   post = async <T = any>(url: string, data?: any, config?: AxiosRequestConfig): Promise<T> => {

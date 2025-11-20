@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/contexts';
 import { useNavigate } from 'react-router-dom';
@@ -72,7 +72,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, module }) => 
   }
 
   // Redirection automatique des professeurs vers les notes
-  if (role === 'professeur' && window.location.pathname === FRONTEND_ROUTES.PORTAIL) {
+  if (role === 'professeur' as any && window.location.pathname === FRONTEND_ROUTES.PORTAIL) {
     return <Navigate to="/notes/professor/dashboard" replace />;
   }
 

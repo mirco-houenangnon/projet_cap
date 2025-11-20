@@ -47,14 +47,14 @@ const Dashboard = () => {
 
   const monthlyPaymentsData = useMemo(
     () => ({
-      labels: stats?.monthly_payments?.map((item) => item.month_name) || [],
+      labels: stats?.monthly_payments?.map((item: any) => item.month_name) || [],
       datasets: [
         {
           label: 'Montant encaissé (FCFA)',
           backgroundColor: 'rgba(75,192,192,0.4)',
           borderColor: 'rgba(75,192,192,1)',
           borderWidth: 1,
-          data: stats?.monthly_payments?.map((item) => item.total) || [],
+          data: stats?.monthly_payments?.map((item: any) => item.total) || [],
         },
       ],
     }),

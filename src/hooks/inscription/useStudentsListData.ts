@@ -83,7 +83,7 @@ const useStudentsListData = () => {
       return { success: false };
     }
     try {
-      const blob = await InscriptionService.exportList(type, selectedYear, selectedFiliere, selectedNiveau);
+      const blob = await InscriptionService.exportList(type, selectedYear, selectedFiliere, selectedNiveau) as unknown as Blob;
       // Create a download URL from the Blob
       const url = window.URL.createObjectURL(blob);
       // Create a temporary link and trigger download

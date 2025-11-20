@@ -211,7 +211,7 @@ const StudentsList = () => {
           (typeof f === 'object' && String(f.id) === selectedFiliere) || String(f) === selectedFiliere
         )
         
-        const yearLabel = yearObj && typeof yearObj === 'object' ? (yearObj.libelle || yearObj.academic_year || selectedYear) : selectedYear
+        const yearLabel = yearObj && typeof yearObj === 'object' ? (yearObj.libelle || (yearObj as any).academic_year || selectedYear) : selectedYear
         const filiereLabel = filiereObj && typeof filiereObj === 'object' ? (filiereObj.name || filiereObj.title || filiereObj.libelle || selectedFiliere) : selectedFiliere
 
         const link = document.createElement('a')

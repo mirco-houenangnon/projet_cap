@@ -14,7 +14,7 @@ const NoteRoutes = () => {
   const { role } = useAuth()
   
   // Déterminer la route par défaut selon le rôle
-  const defaultRoute = role === 'professeur' 
+  const defaultRoute = (role as any) === 'professeur' 
     ? '/notes/professor/dashboard' 
     : '/notes/admin/dashboard'
   
