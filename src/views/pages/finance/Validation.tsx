@@ -22,11 +22,16 @@ import {
   CFormInput,
   CPagination,
   CPaginationItem,
+  CNav,
+  CNavItem,
+  CNavLink,
 } from '@coreui/react'
 import CIcon from '@coreui/icons-react'
 import { cilCheckCircle, cilXCircle, cilFile, cilSearch } from '@coreui/icons'
 import { LoadingSpinner } from '@/components'
 import useValidation from '@/hooks/finance/useValidation'
+import { formatDate, formatDateTime } from '@/utils/date.utils'
+import Swal from 'sweetalert2'
 
 const Validation = () => {
   const {
@@ -38,6 +43,8 @@ const Validation = () => {
     downloadReceipt,
     searchPayments,
     pagination,
+    activeTab,
+    changeTab,
   } = useValidation()
 
   const [showValidateModal, setShowValidateModal] = useState(false)
@@ -72,12 +79,42 @@ const Validation = () => {
   const confirmValidation = async () => {
     if (selectedPayment) {
       try {
+        // Afficher le loading
+        Swal.fire({
+          title: 'Validation en cours...',
+          text: 'Veuillez patienter',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          didOpen: () => {
+            Swal.showLoading()
+          }
+        })
+
         await validatePayment(selectedPayment.id, { observation })
+        
+        // Fermer le loading et afficher le succès
+        Swal.fire({
+          icon: 'success',
+          title: 'Validation réussie !',
+          text: `Le paiement de ${selectedPayment.amount?.toLocaleString()} FCFA a été validé avec succès.`,
+          confirmButtonText: 'OK',
+          timer: 3000,
+          timerProgressBar: true
+        })
+
         setShowValidateModal(false)
         setObservation('')
         setSelectedPayment(null)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erreur lors de la validation:', error)
+        
+        // Afficher l'erreur
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: error.message || 'Une erreur est survenue lors de la validation',
+          confirmButtonText: 'OK'
+        })
       }
     }
   }
@@ -85,12 +122,42 @@ const Validation = () => {
   const confirmRejection = async () => {
     if (selectedPayment && rejectionReason.trim()) {
       try {
+        // Afficher le loading
+        Swal.fire({
+          title: 'Rejet en cours...',
+          text: 'Veuillez patienter',
+          allowOutsideClick: false,
+          allowEscapeKey: false,
+          didOpen: () => {
+            Swal.showLoading()
+          }
+        })
+
         await rejectPayment(selectedPayment.id, { motif: rejectionReason })
+        
+        // Fermer le loading et afficher le succès
+        Swal.fire({
+          icon: 'success',
+          title: 'Rejet effectué !',
+          text: `Le paiement de ${selectedPayment.amount?.toLocaleString()} FCFA a été rejeté.`,
+          confirmButtonText: 'OK',
+          timer: 3000,
+          timerProgressBar: true
+        })
+
         setShowRejectModal(false)
         setRejectionReason('')
         setSelectedPayment(null)
-      } catch (error) {
+      } catch (error: any) {
         console.error('Erreur lors du rejet:', error)
+        
+        // Afficher l'erreur
+        Swal.fire({
+          icon: 'error',
+          title: 'Erreur',
+          text: error.message || 'Une erreur est survenue lors du rejet',
+          confirmButtonText: 'OK'
+        })
       }
     }
   }
@@ -131,25 +198,72 @@ const Validation = () => {
             </CAlert>
           )}
 
+          {/* Onglets */}
+          <CNav variant="tabs" className="mb-3">
+            <CNavItem>
+              <CNavLink
+                active={activeTab === 'pending'}
+                onClick={() => changeTab('pending')}
+                style={{ cursor: 'pointer' }}
+              >
+                En attente
+                {activeTab === 'pending' && pagination?.total > 0 && (
+                  <CBadge color="warning" className="ms-2">{pagination.total}</CBadge>
+                )}
+              </CNavLink>
+            </CNavItem>
+            <CNavItem>
+              <CNavLink
+                active={activeTab === 'approved'}
+                onClick={() => changeTab('approved')}
+                style={{ cursor: 'pointer' }}
+              >
+                Validés
+                {activeTab === 'approved' && pagination?.total > 0 && (
+                  <CBadge color="success" className="ms-2">{pagination.total}</CBadge>
+                )}
+              </CNavLink>
+            </CNavItem>
+            <CNavItem>
+              <CNavLink
+                active={activeTab === 'rejected'}
+                onClick={() => changeTab('rejected')}
+                style={{ cursor: 'pointer' }}
+              >
+                Rejetés
+                {activeTab === 'rejected' && pagination?.total > 0 && (
+                  <CBadge color="danger" className="ms-2">{pagination.total}</CBadge>
+                )}
+              </CNavLink>
+            </CNavItem>
+          </CNav>
+
           <CTable hover responsive>
             <CTableHead>
               <CTableRow>
+                <CTableHeaderCell>N°</CTableHeaderCell>
                 <CTableHeaderCell>Matricule</CTableHeaderCell>
                 <CTableHeaderCell>Nom et Prénoms</CTableHeaderCell>
                 <CTableHeaderCell>Montant</CTableHeaderCell>
                 <CTableHeaderCell>Date de paiement</CTableHeaderCell>
+                {activeTab !== 'pending' && (
+                  <CTableHeaderCell>Date de modification</CTableHeaderCell>
+                )}
                 <CTableHeaderCell>Quittance</CTableHeaderCell>
                 <CTableHeaderCell>Observations</CTableHeaderCell>
-                <CTableHeaderCell>Actions</CTableHeaderCell>
+                {activeTab === 'pending' && <CTableHeaderCell>Actions</CTableHeaderCell>}
               </CTableRow>
             </CTableHead>
             <CTableBody>
-              {pendingPayments?.data?.length > 0 ? pendingPayments.data.map((payment: any) => (
+              {pendingPayments?.data?.length > 0 ? pendingPayments.data.map((payment: any, index: number) => (
                 <CTableRow key={payment.id}>
+                  <CTableDataCell>
+                    {(pagination?.current_page - 1) * (pagination?.per_page || 10) + index + 1}
+                  </CTableDataCell>
                   <CTableDataCell>{payment.student_id_number}</CTableDataCell>
                   <CTableDataCell>
                     {payment.student 
-                      ? `${payment.student.first_name} ${payment.student.last_name}`
+                      ? `${payment.student_pending_student.pending_student.personal_information.first_names} ${payment.student_pending_student.pending_student.personal_information.last_name}`
                       : payment.studentPendingStudent
                       ? `${payment.studentPendingStudent.first_name} ${payment.studentPendingStudent.last_name}`
                       : 'N/A'
@@ -157,16 +271,25 @@ const Validation = () => {
                   </CTableDataCell>
                   <CTableDataCell>{payment.amount?.toLocaleString()} FCFA</CTableDataCell>
                   <CTableDataCell>
-                    {new Date(payment.payment_date).toLocaleDateString('fr-FR')}
+                    {formatDate(payment.payment_date)}
                   </CTableDataCell>
+                  {activeTab !== 'pending' && (
+                    <CTableDataCell>
+                      <span className="text-muted small">
+                        {formatDateTime(payment.updated_at)}
+                      </span>
+                    </CTableDataCell>
+                  )}
                   <CTableDataCell>
                     <CButton
                       color="info"
                       variant="ghost"
                       size="sm"
                       onClick={() => handleViewReceipt(payment)}
+                      className="d-flex align-items-center gap-1"
                     >
                       <CIcon icon={cilFile} />
+                      <span>Voir la quittance</span>
                     </CButton>
                   </CTableDataCell>
                   <CTableDataCell>
@@ -174,33 +297,37 @@ const Validation = () => {
                       {payment.observation || 'Aucune observation'}
                     </span>
                   </CTableDataCell>
-                  <CTableDataCell>
-                    <div className="d-flex gap-1">
-                      <CButton
-                        color="success"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleValidate(payment)}
-                        title="Valider"
-                      >
-                        <CIcon icon={cilCheckCircle} />
-                      </CButton>
-                      <CButton
-                        color="danger"
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleReject(payment)}
-                        title="Rejeter"
-                      >
-                        <CIcon icon={cilXCircle} />
-                      </CButton>
-                    </div>
-                  </CTableDataCell>
+                  {activeTab === 'pending' && (
+                    <CTableDataCell>
+                      <div className="d-flex gap-1">
+                        <CButton
+                          color="success"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleValidate(payment)}
+                          title="Valider"
+                        >
+                          <CIcon icon={cilCheckCircle} />
+                        </CButton>
+                        <CButton
+                          color="danger"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleReject(payment)}
+                          title="Rejeter"
+                        >
+                          <CIcon icon={cilXCircle} />
+                        </CButton>
+                      </div>
+                    </CTableDataCell>
+                  )}
                 </CTableRow>
               )) : (
                 <CTableRow>
-                  <CTableDataCell colSpan={7} className="text-center text-muted py-4">
-                    Aucun paiement en attente de validation
+                  <CTableDataCell colSpan={activeTab === 'pending' ? 8 : 8} className="text-center text-muted py-4">
+                    {activeTab === 'pending' && 'Aucun paiement en attente de validation'}
+                    {activeTab === 'approved' && 'Aucun paiement validé'}
+                    {activeTab === 'rejected' && 'Aucun paiement rejeté'}
                   </CTableDataCell>
                 </CTableRow>
               )}

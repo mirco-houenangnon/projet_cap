@@ -396,25 +396,30 @@ class InscriptionService {
   }
 
   /**
-   * Récupère les cohortes pour une année académique
+   * Récupère les cohortes pour une année académique et optionnellement une filière
    */
-  getCohorts = async (academicYearId?: number | string) => {
-    const params = academicYearId ? `?academic_year_id=${academicYearId}` : ''
-    const response = await HttpService.get(`${INSCRIPTION_ROUTES.BASE}/cohortes${params}`)
+  getCohorts = async (academicYearId?: number | string, departmentId?: number | string) => {
+    const params = new URLSearchParams()
+    if (academicYearId) params.append('academic_year_id', academicYearId.toString())
+    if (departmentId) params.append('department_id', departmentId.toString())
+    
+    const queryString = params.toString()
+    const url = queryString ? `${INSCRIPTION_ROUTES.BASE}/cohortes?${queryString}` : `${INSCRIPTION_ROUTES.BASE}/cohortes`
+    const response = await HttpService.get(url)
     return response.data || []
   }
 
   /**
    * Récupère toutes les options de filtrage (filières, années, diplômes d'entrée, statuts, niveaux)
+   * Note: Les cohortes sont gérées séparément car elles dépendent de la filière sélectionnée
    */
   filterOptions = async (academicYearId?: number | string) => {
     try {
-      const [filieres, years, entryDiplomas, niveaux, cohorts] = await Promise.all([
+      const [filieres, years, entryDiplomas, niveaux] = await Promise.all([
         this.getFilieres().catch(() => []),
         this.academicYears().catch(() => []),
         this.getEntryDiplomas().catch(() => ({ data: [] })),
-        this.getAllNiveaux().catch(() => []),
-        academicYearId ? this.getCohorts(academicYearId).catch(() => []) : Promise.resolve([])
+        this.getAllNiveaux().catch(() => [])
       ])
       
       // Statuts disponibles pour les étudiants en attente
@@ -430,7 +435,7 @@ class InscriptionService {
         entryDiplomas: entryDiplomas?.data || [],
         statuts,
         niveaux: niveaux || [],
-        cohorts: cohorts || []
+        cohorts: [] // Les cohortes sont chargées séparément via getCohorts()
       }
     } catch (error) {
       console.error('Erreur lors de la récupération des options de filtrage:', error)

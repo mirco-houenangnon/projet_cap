@@ -111,7 +111,7 @@ const AdminDashboard = () => {
   const departmentOptions = useMemo(() => {
     return departments.map((dept: any) => ({
       value: dept.id,
-      label: dept.name
+      label: dept.title
     }))
   }, [departments])
 

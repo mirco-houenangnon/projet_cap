@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import InscriptionService from '../../services/inscription.service';
 import type { AcademicYear, PendingStudentData, PendingStudentsFilterOptions } from '../../types/inscription.types';
 
@@ -32,6 +32,9 @@ const usePendingStudentsData = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Ref pour éviter de réinitialiser la cohorte lors du chargement initial
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -51,7 +54,11 @@ const usePendingStudentsData = () => {
         }
 
         const filterData = await InscriptionService.filterOptions(selectedYear !== 'all' ? selectedYear : undefined);
-        setFilterOptions(filterData || { filieres: [], years: [], entryDiplomas: [], statuts: [], niveaux: [], cohorts: [] });
+        // Ne pas écraser les cohortes qui sont gérées par un useEffect séparé
+        setFilterOptions(prev => ({ 
+          ...filterData, 
+          cohorts: prev.cohorts // Garder les cohortes existantes
+        }));
 
         const params: any = { page: currentPage };
         
@@ -100,18 +107,42 @@ const usePendingStudentsData = () => {
     fetchData();
   }, [selectedYear, selectedFiliere, selectedEntryDiploma, selectedCohort, selectedStatut, currentPage, searchQuery]);
 
-  // Recharger les cohortes quand l'année change
+  // Recharger les cohortes quand l'année ou la filière change
   useEffect(() => {
     const fetchCohorts = async () => {
       if (selectedYear !== 'all') {
-        const filterData = await InscriptionService.filterOptions(selectedYear);
-        setFilterOptions(prev => ({ ...prev, cohorts: filterData.cohorts || [] }));
+        const departmentId = selectedFiliere !== 'all' ? selectedFiliere : undefined;
+        const cohorts = await InscriptionService.getCohorts(selectedYear, departmentId);
+        setFilterOptions(prev => ({ ...prev, cohorts: cohorts || [] }));
+        
+        // Ne pas auto-sélectionner au premier chargement
+        if (isInitialMount.current) {
+          isInitialMount.current = false;
+          return;
+        }
+        
+        // Si une seule cohorte, la sélectionner automatiquement
+        if (cohorts && cohorts.length === 1) {
+          setSelectedCohort(cohorts[0].value);
+        } else if (cohorts && cohorts.length > 1) {
+          // Si plusieurs cohortes et que la cohorte actuelle n'existe plus, réinitialiser
+          const currentCohortExists = cohorts.some((c: any) => c.value === selectedCohort);
+          if (!currentCohortExists && selectedCohort !== 'all') {
+            setSelectedCohort('all');
+          }
+        } else {
+          // Aucune cohorte disponible
+          setSelectedCohort('all');
+        }
       } else {
         setFilterOptions(prev => ({ ...prev, cohorts: [] }));
+        if (!isInitialMount.current) {
+          setSelectedCohort('all');
+        }
       }
     };
     fetchCohorts();
-  }, [selectedYear]);
+  }, [selectedYear, selectedFiliere]);
 
   // Fonction pour mettre à jour les pièces d'un étudiant
   const updateStudentPieces = async (studentId: number, newPieces: any): Promise<FunctionResult> => {
@@ -186,8 +217,12 @@ const usePendingStudentsData = () => {
           endpoint += `&cohort=${selectedCohort}`;
         }
       } else {
-        // Pour les autres formats, on garde l'ancien comportement
-        endpoint = `/inscription/export/${format}?year=${selectedYear}&filiere=${selectedFiliere}&cohort=${selectedCohort}`;
+        // Pour les autres formats
+        endpoint = `/inscription/export/${format}?year=${selectedYear}&filiere=${selectedFiliere}`;
+        // N'ajouter cohort que si ce n'est pas 'all'
+        if (selectedCohort !== 'all') {
+          endpoint += `&cohort=${selectedCohort}`;
+        }
       }
       
       const response = await InscriptionService.exportData(endpoint);

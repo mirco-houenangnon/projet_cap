@@ -321,12 +321,12 @@ const PendingStudents: React.FC = () => {
           return
         }
       } else {
-        // Pour les autres exports, on garde la validation complète
-        if (selectedYear === 'all' || selectedFiliere === 'all' || selectedCohort === 'all') {
+        // Pour les autres exports, année et filière sont obligatoires, cohorte optionnelle
+        if (selectedYear === 'all' || selectedFiliere === 'all') {
           Swal.fire({
             icon: 'warning',
             title: 'Sélection requise',
-            text: "Veuillez sélectionner une année académique, une filière et une cohorte avant d'exporter.",
+            text: "Veuillez sélectionner une année académique et une filière avant d'exporter.",
           })
           return
         }
